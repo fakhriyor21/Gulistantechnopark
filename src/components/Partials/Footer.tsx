@@ -151,9 +151,9 @@ export default function Footer() {
             <span>
               © {new Date().getFullYear()} Barcha huquqlar himoyalangan
             </span>
-            <a className="font-semibold" href="https://t.me/kholboevdevblog">
-              Ishlab chiquvchi: Sevinchbek Kholboev
-            </a>
+            <span className="font-semibold">
+              Ishlab chiquvchi: Sadullayev Faxiyor
+            </span>
           </div>
         </footer>
       </>
