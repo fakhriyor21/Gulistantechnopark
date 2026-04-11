@@ -3,17 +3,18 @@ import { FaLocationDot } from "react-icons/fa6";
 import { MdEmail } from "react-icons/md";
 import logo from "../assets/images/logo/logo-crup.png";
 import { IoTimeSharp } from "react-icons/io5";
+import { PageContent, PageHero } from "../components/Layout/PageLayout";
+
 export default function Contact() {
   return (
-    <div className="dark:bg-[#08101B]">
-      <div className="flex flex-1 flex-col overflow-x-hidden pt-20">
-        <div className="container mx-auto px-5 pt-5 xl:px-16">
-          <div className="flex flex-col gap-5">
-            <h1 className="text-left text-2xl font-bold text-[#33445F] dark:text-white lg:pb-4 lg:pt-5 lg:text-center lg:text-[2.688rem]">
-              Kontaktlar
-            </h1>
-          </div>
-          <div className="flex flex-col gap-5 pb-[3.75rem] pt-[1.875rem]">
+    <div className="min-h-screen dark:bg-[#08101B]">
+      <PageHero
+        eyebrow="Aloqa"
+        title="Kontaktlar"
+        subtitle="Telefon, e-mail va manzil — savollar bo‘lsa, murojaat qiling."
+      />
+      <PageContent className="overflow-x-hidden pt-4">
+          <div className="flex flex-col gap-5 pb-12 pt-2">
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               <div className="flex w-full flex-col gap-9 rounded-xl border border-solid border-[#E7ECF5] bg-[#F4F6F9] p-6 dark:border-[#172333] dark:bg-[#081e3f4d]">
                 <FaPhoneAlt className="text-4xl dark:text-blue-500  text-blue-600" />
@@ -91,7 +92,7 @@ export default function Contact() {
                 </div>
               </div>
             </div>
-            <div className="relative ">
+            <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 shadow-sm dark:border-slate-700">
               <iframe
                 className="relative w-full rounded-xl xl:col-span-3"
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3033.5620961385507!2d68.77823247682039!3d40.50706547142525!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38b20786fad1fc55%3A0xed271e381b97e2cd!2sSirdaryo%20viloyati%20Yoshlar%20Texnoparki!5e0!3m2!1sen!2s!4v1727156574496!5m2!1sen!2s"
@@ -241,8 +242,7 @@ export default function Contact() {
               </div>
             </div>
           </div>
-        </div>
-      </div>
+      </PageContent>
     </div>
   );
 }

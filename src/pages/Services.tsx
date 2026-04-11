@@ -7,25 +7,18 @@ import { FaComputer } from "react-icons/fa6";
 import { FaPeopleArrows } from "react-icons/fa";
 import { MdWeb } from "react-icons/md";
 import { Link } from "react-router-dom";
+import { PageContent, PageHero } from "../components/Layout/PageLayout";
+
 export default function Services() {
   return (
-    <div className="dark:bg-[#08101B] ">
-      <div className=" pt-24 flex flex-col justify-center items-center">
-        <div className="max-w-screen-2xl flex w-full flex-col items-center justify-between gap-5 pt-5 text-center xl:flex-row xl:gap-7 xl:pt-10 xl:text-left">
-          <h1 className="w-full text-2xl font-bold text-[#33445F] dark:text-white xl:w-2/3 xl:text-[2.625rem] xl:leading-[3.825rem]">
-            Ko'p yillik tajribaga ega jamoamiz sizga innovatsion xizmatlarni
-            taklif qiladi.
-          </h1>
-          <p className=" w-full pt-0 text-sm text-[#8F98A7] dark:text-white xl:w-2/3 xl:pt-5 xl:text-lg">
-            Bugungi kunda biz texnoparkda texnologik taraqqiyot va
-            innovatsiyalar markazida turibmiz. Bizning asosiy maqsadimiz — yangi
-            g‘oyalarni rivojlantirish, kelajak avlodiga zamonaviy texnologik
-            sharoitlarni taqdim etish va yurtimizning innovatsion salohiyatini
-            kuchaytirishdir. Har bir mijozimizning g‘oyasi biz uchun kelajakdagi
-            katta yutuqlar sari yo‘l bo‘lib xizmat qiladi.
-          </p>
-        </div>
-        <div className="container mb-[3.75rem] grid w-full grid-cols-1 gap-5 pt-5 md:grid-cols-2 md:pt-12 xl:grid-cols-4">
+    <div className="min-h-screen dark:bg-[#08101B]">
+      <PageHero
+        eyebrow="Xizmatlar"
+        title="Innovatsion xizmatlar"
+        subtitle="Tajribali jamoamiz texnoparkda texnologik taraqqiyot va innovatsiyalar markazida sizga yechimlar taklif qiladi. Har bir g‘oya – kelajakdagi yutuqlar sari yo‘l."
+      />
+      <PageContent className="pb-16 pt-4">
+        <div className="mb-10 grid w-full grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
           <div className="flex flex-col items-center rounded-xl py-5 px-4 bg-white dark:bg-[#081e3f4d] border border-[#e7ecf540] dark:border-[#ffffff0f] shadow-[0_2px_45px_0_rgba(0,0,0,0.02)] dark:shadow-[0_4px_30px_0_rgba(0,0,0,0.12)]">
             <BsFillRocketTakeoffFill className="text-4xl dark:text-blue-500  text-blue-600" />
             <p className="mt-5 text-center font-bold text-[#33445F] dark:text-white">
@@ -167,7 +160,7 @@ export default function Services() {
             </Link>
           </div>
         </div>
-      </div>
+      </PageContent>
     </div>
   );
 }

@@ -4,6 +4,8 @@ import { getNews } from "../server/Admin/Server";
 import { LiaSpinnerSolid } from "react-icons/lia";
 import { mediaFileUrl } from "../lib/apiOrigin";
 import newsPlaceholder from "../assets/images/home/itcourse.jpg";
+import { PageContent, PageHero } from "../components/Layout/PageLayout";
+
 export default function News() {
   interface News {
     id: number;
@@ -46,22 +48,21 @@ export default function News() {
   }
 
   return (
-    <div className="dark:bg-[#08101B] ">
-      <div className="flex flex-1 flex-col overflow-x-hidden pt-24">
-        <div className="container mx-auto px-5  xl:px-16 xl:pt-11 mb-10 ">
-          <div className="flex flex-col lg:items-center ">
-            <h1 className="max-w-[612px] text-2xl font-bold text-[#33445F] dark:text-white lg:text-[2.688rem]">
-              Yangiliklar
-            </h1>
-          </div>
-          <div className="grid w-full grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4 pt-10">
+    <div className="min-h-screen dark:bg-[#08101B]">
+      <PageHero
+        eyebrow="Yangiliklar"
+        title="So‘nggi e’lonlar va voqealar"
+        subtitle="Texnopark hayoti, tadbirlar va startaplar haqida yangilanishlar."
+      />
+      <PageContent className="overflow-x-hidden pt-4">
+          <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {news.map((item) => (
               <Link
-                className="flex flex-col justify-between gap-4 rounded-xl border border-solid border-[#ffffff1a] bg-[#F4F6F9] py-5 backdrop-blur-[0.625rem] dark:bg-[#081E3F4D]"
+                className="flex flex-col justify-between gap-4 overflow-hidden rounded-2xl border border-slate-200/80 bg-white py-0 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg dark:border-white/10 dark:bg-[#0d1829] dark:shadow-none dark:hover:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.4)]"
                 to={`/news/${item.id}`}
                 key={item.id}
               >
-                <div className="flex min-h-32 flex-col gap-3 px-5">
+                <div className="flex min-h-32 flex-col gap-3 px-5 pt-5">
                   <div className="flex items-center justify-between">
                     <p className="text-xs leading-[1.2rem] text-[#9CA1A9]">
                       {formatDate(item.datatime)}
@@ -113,8 +114,7 @@ export default function News() {
               </Link>
             ))}
           </div>
-        </div>
-      </div>
+      </PageContent>
     </div>
   );
 }

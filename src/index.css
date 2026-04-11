@@ -77,7 +77,6 @@
   }
 }
 
-
 .main-container {
   min-height: 100vh;
   display: flex;
@@ -258,5 +257,117 @@
   }
 }
 
+.marquee-track {
+  display: flex;
+  width: max-content;
+  padding-left: 1rem;
+  will-change: transform;
+  transition: transform 120ms linear;
+}
 
+@keyframes team-overlay-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.team-overlay-panel {
+  animation: team-overlay-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .team-overlay-panel {
+    animation: none;
+  }
+}
+
+.marquee-row {
+  overflow: hidden;
+}
+
+.about-mosaic .marquee-track--mosaic {
+  align-items: stretch;
+  padding-left: 0;
+  transition: none;
+}
+
+.about-mosaic--hero .marquee-track--mosaic-gap {
+  gap: 3px;
+  align-items: stretch;
+}
+
+.about-mosaic--hero .marquee-item--mosaic {
+  min-width: 0;
+}
+
+.about-mosaic--hero .marquee-row--hero {
+  display: block;
+  position: relative;
+  margin: 0;
+  padding-block: 0;
+  border: none;
+}
+
+.about-mosaic--hero .marquee-row--hero .marquee-track--mosaic {
+  display: flex;
+  width: max-content;
+  height: 100%;
+  min-height: 100%;
+}
+
+.about-mosaic .marquee-item--mosaic {
+  margin-right: 0;
+  border-radius: 0;
+  border: none;
+  flex-shrink: 0;
+  height: 100%;
+  min-height: 100%;
+  max-height: none;
+  align-self: stretch;
+}
+
+.about-mosaic .marquee-item--mosaic img {
+  filter: brightness(1.02) contrast(1.02);
+}
+
+.dark .about-mosaic .marquee-item--mosaic img {
+  filter: brightness(1.03) contrast(1.03);
+}
+
+.about-mosaic--hero .marquee-item--mosaic img {
+  display: block;
+  vertical-align: middle;
+  filter: brightness(0.96) contrast(1.04) saturate(1.02);
+}
+
+.dark .about-mosaic--hero .marquee-item--mosaic img {
+  filter: brightness(0.94) contrast(1.05) saturate(1.02);
+}
+
+.marquee-item {
+  width: min(40vw, 680px);
+  height: clamp(280px, 33vw, 420px);
+  margin-right: 12px;
+  overflow: hidden;
+  border-radius: 14px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(130, 168, 217, 0.25);
+  background: #ffffff;
+}
+
+.dark .marquee-item {
+  background: #071a31;
+}
+
+@media (max-width: 768px) {
+  .marquee-item:not(.marquee-item--mosaic) {
+    width: 88vw !important;
+    height: 280px !important;
+  }
+}
 

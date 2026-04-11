@@ -106,7 +106,7 @@ export default function About() {
           <div className="w-full transition-colors h-px bg-gradient-to-r from-transparent via-[rgba(86,139,216,0.38)] via-50% to-transparent" />
           <div className="absolute top-0 left-0 w-full transition-colors h-28 pointer-events-none bg-section-header-bg-primary dark:bg-section-header-bg-primary-dark" />
           <div className="mt-10 inline-flex flex-col items-center">
-            <div className="px-2.5 py-1 rounded-lg transition-colors inline-flex text-sm text-[#074196] dark:text-[#568BD8]">
+            <div className="px-3 py-1.5 rounded-lg transition-colors inline-flex text-lg font-semibold text-[#074196] dark:text-[#568BD8] md:text-xl lg:text-2xl">
               Kompaniyamiz haqida
             </div>
             <div className="w-full transition-colors h-12 -mt-10 pointer-events-none bg-primary-section-gradient" />
@@ -162,13 +162,13 @@ export default function About() {
             </div>
           </div>
           
-          <div className="border-1 grid gap-3 pt-5 lg:order-1 xl:grid-cols-4">
+          <div className="border-1 grid gap-3 pt-5 lg:order-1 xl:grid-cols-4 xl:items-stretch">
             {data.map((item, index) => (
               <div
-                className={`flex cursor-pointer flex-col gap-2 rounded-2xl border p-4 text-lg transition-all duration-300 ${
+                className={`flex cursor-pointer flex-col gap-2 rounded-2xl border p-4 text-lg transition-all duration-300 ease-out ${
                   activeIndex === index
-                    ? "border-[#5c8fda] bg-[#edf4ff] shadow-[0_10px_24px_rgba(43,95,173,0.15)]"
-                    : "border-[#e6edf9] bg-white hover:border-[#b9cff2]"
+                    ? "relative z-10 -translate-y-2 scale-[1.02] border-2 border-[#4a7fd4] bg-gradient-to-b from-white to-[#e8f1fc] shadow-[0_1px_0_0_rgba(255,255,255,0.95)_inset,0_8px_16px_-4px_rgba(43,95,173,0.22),0_20px_44px_-8px_rgba(43,95,173,0.38),0_32px_64px_-16px_rgba(56,119,189,0.18)] dark:from-[#1a2744] dark:to-[#152238] dark:border-[#568BD8] dark:shadow-[0_1px_0_0_rgba(255,255,255,0.08)_inset,0_12px_40px_-6px_rgba(0,0,0,0.45),0_24px_48px_-12px_rgba(86,139,216,0.25)]"
+                    : "border border-[#e6edf9] bg-white hover:border-[#b9cff2] hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/40"
                 }`}
                 key={index}
                 onClick={() => {

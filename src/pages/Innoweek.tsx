@@ -1,68 +1,74 @@
-import { Link } from "react-router-dom";
 import flagUzb from "../assets/images/hero/flag-uzb.png";
 import innoweek from "../assets/images/hero/innoweek.jpg";
 import Quote from "../components/Quote/Quote";
 import CountdownTimer from "../components/Countdown/CountdownTimer";
+import { PageContent, PageHero } from "../components/Layout/PageLayout";
 
 export default function Innoweek() {
   const targetDate = new Date("2024-11-13T23:59:59");
   return (
-    <div className="pt-32   dark:bg-[#08101B] ">
-      <div>
+    <div className="min-h-screen dark:bg-[#08101B]">
+      <div className="pt-24">
         <CountdownTimer targetDate={targetDate} />
       </div>
 
-      <div className="flex 10 gap-10 pt-5 text-center lg:pt-20 lg:text-left p-8">
-        <div className="flex w-full flex-col items-center gap-4 lg:items-start 2xl:w-2/3">
-          <h1 className="text-2xl font-bold text-[#33445F] dark:text-white lg:text-4xl lg:leading-snug xl:text-[2.688rem]">
-            14-16-noyabr kunlari bo‘lib o‘tadigan “Innoweek-2024” xalqaro
-            innovatsion g‘oyalar haftaligiga marhamat!
-          </h1>
-          <p className="mb-3.5 lg:text-lg text-justify">
-            Xalqaro innovatsion g‘oyalar haftaligi — “Innoweek.uz” respublikada
-            innovatsion rivojlanishni jadallashtirish, iqtisodiyotning barcha
-            tarmoqlarida innovatsiyalar va texnologiyalarni keng tatbiq qilish,
-            inson kapitalini, ilm-fan va innovatsiya sohalarini rivojlantirish
-            maqsadida 2018-yildan buyon o‘tkazib kelinmoqda. O‘tgan davr
-            mobaynida Prezident Shavkat Mirziyoyev rahbarligida rivojlanib,
-            Markaziy Osiyoda ilg‘or innovatsiyalarni namoyish qilish va global
-            hamkorlikni rivojlantirish uchun eng yirik maydonga aylandi. Tadbir
-            har yili yetakchi mahalliy va xalqaro kompaniyalar, investorlar,
-            diplomatlar, tadbirkorlar, olimlar, startaplar, texnologiya
-            ekspertlari va davlat idoralari vakillarini bir davrada
-            birlashtiradi. Shuningdek, innovatsion sektor yetakchilari,
-            hamkorlik va investitsiyalarga oid soha egalari bilan muloqot qilish
-            uchun ideal platforma.
-          </p>
-          <Link
-            to={"https://www.innoweek.uz/"}
-            className="inline-flex items-center justify-center whitespace-nowrap ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 rounded-md border border-solid border-[#EF7F1A] bg-[#EF7F1A] font-semibold text-white px-4 py-3 text-sm w-full sm:w-1/2 xl:w-1/3"
-          >
-            <button>Ko'proq ma'lumot olish</button>
-          </Link>
+      <PageHero
+        eyebrow="INNOWEEK"
+        title="Xalqaro innovatsion g‘oyalar haftaligi"
+        subtitle="14–16-noyabr kunlari bo‘lib o‘tadigan tadbirga marhamat. Innovatsiya, texnologiya va hamkorlik uchun platforma."
+      />
+
+      <PageContent className="pt-6">
+        <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-12">
+          <div className="flex w-full flex-col gap-4 lg:w-2/3">
+            <p className="text-justify text-sm leading-relaxed text-[#33445F] dark:text-white/85 md:text-base">
+              Xalqaro innovatsion g‘oyalar haftaligi — “Innoweek.uz”
+              respublikada innovatsion rivojlanishni jadallashtirish, iqtisodiyotning
+              barcha tarmoqlarida innovatsiyalar va texnologiyalarni keng tatbiq
+              qilish, inson kapitalini, ilm-fan va innovatsiya sohalarini
+              rivojlantirish maqsadida 2018-yildan buyon o‘tkazib kelinmoqda.
+              O‘tgan davr mobaynida Prezident Shavkat Mirziyoyev rahbarligida
+              rivojlanib, Markaziy Osiyoda ilg‘or innovatsiyalarni namoyish qilish
+              va global hamkorlikni rivojlantirish uchun eng yirik maydonga aylandi.
+              Tadbir har yili yetakchi mahalliy va xalqaro kompaniyalar,
+              investorlar, diplomatlar, tadbirkorlar, olimlar, startaplar,
+              texnologiya ekspertlari va davlat idoralari vakillarini bir
+              davrada birlashtiradi.
+            </p>
+            <a
+              href="https://www.innoweek.uz/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex w-full max-w-md items-center justify-center rounded-xl border border-solid border-[#EF7F1A] bg-[#EF7F1A] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#e06f0a] sm:w-auto"
+            >
+              Ko‘proq ma&apos;lumot olish
+            </a>
+          </div>
+          <div className="relative hidden w-full shrink-0 justify-end lg:flex lg:w-1/3">
+            <img
+              className="max-h-[420px] w-full max-w-md shrink-0 rounded-2xl object-cover object-top shadow-lg"
+              src={flagUzb}
+              alt=""
+            />
+          </div>
         </div>
-        <div className="relative hidden h-[500px] w-full lg:flex justify-end ">
+
+        <div className="mt-10 overflow-hidden rounded-2xl border border-slate-200/60 shadow-md dark:border-white/10">
           <img
-            className=" shrink-0 rounded-2xl bg-no-repeat "
-            src={flagUzb}
-            alt="background-2"
+            className="w-full object-cover"
+            src={innoweek}
+            alt="Innoweek"
           />
         </div>
-      </div>
-      <div className=" p-10">
-        <img
-          className=" shrink-0 rounded-2xl bg-no-repeat "
-          src={innoweek}
-          alt="background-2"
-        />
-      </div>
-      <div className="p-10">
-        <Quote
-          title={
-            "InnoWeek haftaligi doirasida innovatsion maxsulotlardan foydalangan holda texnologik yechimlarni ishlab chiqish boʻyicha har yili oʻtkaziladigan tadbir. Turli xil muammolarga innovatsion yechimlar!"
-          }
-        />
-      </div>
+
+        <div className="mt-12">
+          <Quote
+            title={
+              "InnoWeek haftaligi doirasida innovatsion mahsulotlardan foydalangan holda texnologik yechimlarni ishlab chiqish boʻyicha har yili oʻtkaziladigan tadbir. Turli xil muammolarga innovatsion yechimlar!"
+            }
+          />
+        </div>
+      </PageContent>
     </div>
   );
 }

@@ -13,6 +13,8 @@ export default function NewsPage() {
     file: string[];
   }
   const [news, setNews] = useState<News[]>([]);
+  const visibleNews = news.slice(0, 3);
+  const placeholderCount = Math.max(0, 3 - visibleNews.length);
   useEffect(() => {
     const fetchNews = async () => {
       const response = await getNews();
@@ -35,7 +37,7 @@ export default function NewsPage() {
   }
   return (
     <div className="relative">
-      <div className="container px-5 lg:px-16 lg:pb-16 dark:bg-[#08101B40]">
+      <div className="w-full max-w-none px-4 sm:px-6 lg:px-10 lg:pb-16 xl:px-14 2xl:px-16 dark:bg-[#08101B40]">
         <div className="relative mb-2.5 flex flex-col items-center">
           <div className="w-full transition-colors h-px bg-gradient-to-r from-transparent via-[rgba(86,139,216,0.38)] via-50% to-transparent" />
           <div className="absolute top-0 left-0 w-full transition-colors h-28 pointer-events-none bg-section-header-bg-primary dark:bg-section-header-bg-primary-dark" />
@@ -48,11 +50,11 @@ export default function NewsPage() {
           </div>
         </div>
         <div className="flex flex-col items-center gap-8">
-          <h1 className="w-full text-center text-xl font-bold text-[#33445F] dark:text-white lg:w-1/2 lg:text-4xl">
+          <h1 className="w-full text-center text-xl font-bold text-[#33445F] dark:text-white lg:text-4xl">
             Yangiliklar va maqolalar
           </h1>
-          <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {news.slice(0, 4).map((item) => (
+          <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {visibleNews.map((item) => (
               <Link
                 className="flex flex-col justify-between gap-4 rounded-xl border border-solid border-[#ffffff1a] bg-[#F4F6F9] py-5 backdrop-blur-[0.625rem] dark:bg-[#081E3F4D]"
                 to={`/news/${item.id}`}
@@ -109,9 +111,28 @@ export default function NewsPage() {
                 </div>
               </Link>
             ))}
+            {Array.from({ length: placeholderCount }).map((_, index) => (
+              <div
+                key={`news-placeholder-${index}`}
+                className="flex min-h-[420px] flex-col justify-between gap-4 rounded-xl border border-dashed border-[#d4dbe7] bg-[#F4F6F9]/60 py-5 backdrop-blur-[0.625rem] dark:border-[#ffffff1a] dark:bg-[#081E3F33]"
+              >
+                <div className="flex min-h-32 flex-col gap-3 px-5">
+                  <div className="h-3 w-20 animate-pulse rounded bg-[#dbe4f4] dark:bg-[#243149]" />
+                  <div className="h-6 w-full animate-pulse rounded bg-[#dbe4f4] dark:bg-[#243149]" />
+                  <div className="h-4 w-5/6 animate-pulse rounded bg-[#dbe4f4] dark:bg-[#243149]" />
+                  <div className="h-4 w-3/4 animate-pulse rounded bg-[#dbe4f4] dark:bg-[#243149]" />
+                </div>
+                <div className="px-5">
+                  <div className="h-52 w-full animate-pulse rounded bg-[#dbe4f4] dark:bg-[#243149]" />
+                </div>
+                <div className="px-5 pb-2 text-xs text-[#9CA1A9] dark:text-[#8e98a8]">
+                  Tez orada yangilik qo'shiladi
+                </div>
+              </div>
+            ))}
           </div>
           <Link className="flex w-full justify-center" to="/news">
-            <button className="inline-flex items-center justify-center whitespace-nowrap ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 w-full rounded-lg border-[0.094rem] border-solid border-[#E7ECF5] font-bold text-[#074196] hover:bg-white/10 dark:border-[#ffffff1a] dark:text-white lg:w-1/3 lg:font-normal xl:w-1/6 px-6 py-5 text-lg">
+            <button className="inline-flex items-center justify-center whitespace-nowrap ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 w-full rounded-lg border-[0.094rem] border-solid border-[#E7ECF5] font-bold text-[#074196] hover:bg-white/10 dark:border-[#ffffff1a] dark:text-white px-6 py-5 text-lg">
               Hammasini ko'rish
             </button>
           </Link>
