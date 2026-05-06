@@ -1,0 +1,293 @@
+openapi: 3.0.3
+info:
+  title: Guliston Yoshlar Texnoparki API
+  description: |
+    Frontend (React/Vite) bilan kelishilgan REST kontrakt.
+    API barcha yo'llar uchun `/api` prefiks bilan beriladi (to'liq baz URL `VITE_API_ORIGIN` + `/api`).
+  version: 1.0.0
+  contact:
+    name: Loyiha egasi / Frontend
+    url: https://github.com/fakhriyor21/Gulistantechnopark
+
+servers:
+  - url: https://api.example.com
+    description: Production (o'rniga haqiqiy backend domeni)
+  - url: http://localhost:3000
+    description: Local backend (to'g'ridan-to'g'ri)
+  - url: http://localhost:5173
+    description: Vite dev (faqat /api proksi orqali)
+
+tags:
+  - name: Auth
+    description: Admin kirish va OTP
+  - name: News
+    description: Yangiliklar CRUD
+  - name: Media
+    description: Statik media fayllar
+
+paths:
+  /api/login:
+    post:
+      tags: [Auth]
+      summary: Birinchi bosqich — telefon va parol
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            examples:
+              default:
+                value:
+                  phone: "+998 (90) 123-45-67"
+                  password: "secretpass"
+      responses:
+        "200":
+          description: Muvaffaqiyat — keyingi bosqich OTP
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponseSuccess"
+        "401":
+          description: Autentifikatsiya rad etildi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/otp:
+    post:
+      tags: [Auth]
+      summary: OTP tasdiqlash
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpRequest"
+      responses:
+        "200":
+          description: OTP to'g'ri
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtpResponseSuccess"
+        "401":
+          description: Kod noto'g'ri
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/all-news:
+    get:
+      tags: [News]
+      summary: Barcha yangiliklar ro'yxati
+      responses:
+        "200":
+          description: Ro'yxat
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsListResponse"
+
+  /api/all-news-by-id/{id}:
+    get:
+      tags: [News]
+      summary: Bitta yangilik
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Yangilik obyekti
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsItemResponse"
+        "404":
+          description: Topilmadi
+
+  /api/add-news:
+    post:
+      tags: [News]
+      summary: Yangilik qo'shish (admin)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - title
+                - description
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                  description: HTML matn
+                file:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Bir yoki bir nechta rasm (maydon nomi file)
+      responses:
+        "200":
+          description: Saqlandi
+        "201":
+          description: Yaratildi
+        "400":
+          description: Validatsiya xatosi
+        "413":
+          description: Fayl juda katta
+
+  /api/delete-news/{id}:
+    delete:
+      tags: [News]
+      summary: Yangilikni o'chirish (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: O'chirildi
+        "204":
+          description: O'chirildi (body yo'q)
+        "404":
+          description: Topilmadi
+
+  /api/media/{filename}:
+    get:
+      tags: [Media]
+      summary: Yangilik media faylini olish
+      description: filename — URL-encoded; server path traversal dan himoyalanishi kerak
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Binary image
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Fayl yo'q
+
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - phone
+        - password
+      properties:
+        phone:
+          type: string
+          example: '+998 (90) 123-45-67'
+        password:
+          type: string
+          format: password
+
+    LoginResponseSuccess:
+      type: object
+      properties:
+        status:
+          type: boolean
+          example: true
+
+    OtpRequest:
+      type: object
+      required:
+        - phone
+        - code
+      properties:
+        phone:
+          type: string
+        code:
+          type: string
+          pattern: "^\\d{6}$"
+          example: "123456"
+
+    OtpResponseSuccess:
+      type: object
+      properties:
+        status:
+          type: boolean
+          example: true
+        data:
+          type: object
+          additionalProperties: true
+        message:
+          type: object
+          properties:
+            fullname:
+              type: string
+              description: Toast va salomlashish uchun majburiy maydon
+
+    NewsArticle:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - datatime
+        - file
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          description: HTML fragment
+        datatime:
+          type: string
+          format: date-time
+        file:
+          type: array
+          items:
+            type: string
+          description: Media uchun fayl nomlari
+
+    NewsListResponse:
+      type: object
+      properties:
+        message:
+          type: array
+          items:
+            $ref: "#/components/schemas/NewsArticle"
+
+    NewsItemResponse:
+      type: object
+      properties:
+        message:
+          $ref: "#/components/schemas/NewsArticle"
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: boolean
+          example: false
+        detail:
+          type: string
+        code:
+          type: string
