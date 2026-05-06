@@ -42,7 +42,7 @@ const loginAdmin = async ({ phone, password }: LoginAdmin) => {
     const response = await axios.post(`${baseURL}/login`, body, config);
     return response.data;
   } catch (error) {
-    console.log(error);
+    // ignore error in production
   }
 };
 
@@ -60,7 +60,7 @@ const otpCheck = async ({ phone, code }: { phone: string; code: string }) => {
     const response = await axios.post(`${baseURL}/otp`, body, config);
     return response.data;
   } catch (error) {
-    console.log(error);
+    // ignore error in production
   }
 };
 
@@ -84,7 +84,7 @@ const addNews = async ({
     const response = await axios.post(`${baseURL}/add-news`, body, config);
     return response.data;
   } catch (error) {
-    console.log(error);
+    // ignore error in production
   }
 };
 
@@ -102,7 +102,7 @@ const getNews = async () => {
       ? { ...payload, message }
       : { message };
   } catch (error) {
-    console.log(error);
+    // ignore error in production
   }
 };
 
@@ -116,7 +116,7 @@ const deleteNews = async (id: number) => {
     const response = await axios.delete(`${baseURL}/delete-news/${id}`, config);
     return response.data;
   } catch (error) {
-    console.log(error);
+    // ignore error in production
   }
 };
 
@@ -134,7 +134,7 @@ const getByNews = async (id: number) => {
       ? { ...payload, message }
       : { message };
   } catch (error) {
-    console.log(error);
+    // ignore error in production
   }
 };
 export { loginAdmin, otpCheck, addNews, getNews, deleteNews, getByNews };

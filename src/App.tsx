@@ -105,40 +105,35 @@ function PageTransitionLoader() {
 }
 
 function App() {
+  const SiteLayout = () => (
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <div className="flex-grow">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/services" element={<Services />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/news" element={<News />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/innox" element={<Innox />} />
+          <Route path="/services/industries/:id" element={<Industries />} />
+          <Route path="/projects/:id" element={<ProjectInfo />} />
+          <Route path="/news/:id" element={<NewsInfo />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </div>
+      <MobileMenu />
+      <Footer />
+    </div>
+  );
+
   return (
     <>
       <PageTransitionLoader />
       <Routes>
-        <Route
-          path="*"
-          element={
-            <div className="min-h-screen flex flex-col">
-              <Navbar />
-              <div className="flex-grow">
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/services" element={<Services />} />
-                  <Route path="/projects" element={<Projects />} />
-                  <Route path="/news" element={<News />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="/innox" element={<Innox />} />
-                  <Route
-                    path="/services/industries/:id"
-                    element={<Industries />}
-                  />
-                  <Route path="/projects/:id" element={<ProjectInfo />} />
-                  <Route path="/news/:id" element={<NewsInfo />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </div>
-              <MobileMenu />
-              <Footer />
-            </div>
-          }
-        />
-
         <Route path="/admin/*" element={<AppAdmin />} />
+        <Route path="/*" element={<SiteLayout />} />
       </Routes>
       <Toaster />
     </>
