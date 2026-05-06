@@ -9,7 +9,7 @@ import {
   FaFacebookF,
   FaGithub,
 } from "react-icons/fa";
-import director from "../../assets/images/team/director.jpg";
+import director from "../../assets/images/team/director.png";
 import otabek from "../../assets/images/team/otabek.png";
 import maryam from "../../assets/images/team/maryam.png";
 import jasur from "../../assets/images/team/jasur.png";
