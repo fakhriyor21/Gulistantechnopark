@@ -4,27 +4,17 @@ import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { LiaSpinnerSolid } from "react-icons/lia";
 import { useToast } from "../../hooks/use-toast";
-
-interface ContactMessage {
-  id: number;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  company: string;
-  message: string;
-  date: string;
-  read: boolean;
-}
+import { getContactMessages, saveContactMessages } from "@/lib/adminStorage";
+import type { ContactMessageItem } from "@/types/admin";
 
 export default function Messages() {
-  const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const [messages, setMessages] = useState<ContactMessageItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("contactMessages");
-      const items: ContactMessage[] = stored ? JSON.parse(stored) : [];
+      const items = getContactMessages();
       setMessages(items.sort((a, b) => b.id - a.id));
     } catch (error) {
       console.error(error);
@@ -37,9 +27,9 @@ export default function Messages() {
   const handleToggleRead = (id: number) => {
     setMessages((prevMessages) => {
       const updated = prevMessages.map((msg) =>
-        msg.id === id ? { ...msg, read: !msg.read } : msg
+        msg.id === id ? { ...msg, read: !msg.read } : msg,
       );
-      localStorage.setItem("contactMessages", JSON.stringify(updated));
+      saveContactMessages(updated);
       return updated;
     });
   };
@@ -47,7 +37,7 @@ export default function Messages() {
   const handleDelete = (id: number) => {
     setMessages((prevMessages) => {
       const updated = prevMessages.filter((msg) => msg.id !== id);
-      localStorage.setItem("contactMessages", JSON.stringify(updated));
+      saveContactMessages(updated);
       toast({
         title: "Xabar o'chirildi",
         description: "Xabar muvaffaqiyatli o'chirildi.",
@@ -67,7 +57,7 @@ export default function Messages() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#08101B] pb-16">
       <NavbarAdmin />
-      <div className="pt-24 px-5 lg:px-16">
+      <div className="mx-auto w-full max-w-screen-2xl px-4 pb-10 pt-24 sm:px-6 lg:px-10">
         <div className="mb-6">
           <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">
             Murojaat xabarlari
@@ -93,7 +83,7 @@ export default function Messages() {
                 }`}
               >
                 <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex-1">
                       <CardTitle className="flex items-center gap-2">
                         <span>
@@ -110,10 +100,10 @@ export default function Messages() {
                         Telefon: {msg.phone}
                       </p>
                       <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
-                        {msg.date}
+                        {new Date(msg.createdAt).toLocaleString("uz-UZ")}
                       </p>
                     </div>
-                    <div className="flex flex-shrink-0 gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         variant={msg.read ? "outline" : "secondary"}
                         size="sm"

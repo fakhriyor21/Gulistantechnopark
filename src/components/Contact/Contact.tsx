@@ -1,17 +1,8 @@
 import { useState } from "react";
 import { useToast } from "../../hooks/use-toast";
 import logo from "../../assets/images/logo/logo-crup.png";
-
-interface ContactMessage {
-  id: number;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  company: string;
-  message: string;
-  date: string;
-  read: boolean;
-}
+import { addContactMessage } from "@/lib/adminStorage";
+import type { ContactMessageItem } from "@/types/admin";
 
 export default function Contact() {
   const [firstName, setFirstName] = useState("");
@@ -37,21 +28,17 @@ export default function Contact() {
     setLoading(true);
 
     try {
-      const newMessage: ContactMessage = {
+      const newMessage: ContactMessageItem = {
         id: Date.now(),
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         phone: phone.trim(),
         company: company.trim(),
         message: message.trim(),
-        date: new Date().toLocaleString("uz-UZ"),
+        createdAt: new Date().toISOString(),
         read: false,
       };
-
-      const stored = localStorage.getItem("contactMessages");
-      const existing: ContactMessage[] = stored ? JSON.parse(stored) : [];
-      const updated = [newMessage, ...existing];
-      localStorage.setItem("contactMessages", JSON.stringify(updated));
+      addContactMessage(newMessage);
 
       toast({
         title: "Xabar yuborildi",

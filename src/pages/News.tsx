@@ -4,32 +4,30 @@ import { LiaSpinnerSolid } from "react-icons/lia";
 import { PageContent, PageHero } from "../components/Layout/PageLayout";
 import { SAMPLE_NEWS, type PublicNewsItem } from "../data/sampleNews";
 import newsPlaceholder from "../assets/images/home/itcourse.jpg";
+import { formatNewsDate } from "../lib/utils";
+import { getAdminNews } from "@/lib/adminStorage";
+import type { AdminNewsItem } from "@/types/admin";
 
-interface AdminNews {
-  id: string;
-  title: string;
-  description: string;
-  imageUrl: string;
-  date: string;
-}
-
-function newsCoverSrc(item: PublicNewsItem | AdminNews): string {
+function newsCoverSrc(item: PublicNewsItem | AdminNewsItem): string {
   if ("demoImageSrc" in item && item.demoImageSrc) return item.demoImageSrc;
   if ("imageUrl" in item && item.imageUrl) return item.imageUrl;
   if ("file" in item && item.file?.[0]) return `data:image/jpeg;base64,${item.file[0]}`;
   return newsPlaceholder;
 }
 
+function readNewsDate(item: PublicNewsItem | AdminNewsItem): string {
+  return "datatime" in item ? item.datatime : item.createdAt;
+}
+
 export default function News() {
-  const [news, setNews] = useState<(PublicNewsItem | AdminNews)[]>([]);
+  const [news, setNews] = useState<(PublicNewsItem | AdminNewsItem)[]>([]);
   const [loading, setLoading] = useState(true);
   const [showingSamples, setShowingSamples] = useState(false);
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("newsItems");
-      const adminNews: AdminNews[] = stored ? JSON.parse(stored) : [];
-      
+      const adminNews = getAdminNews();
+
       if (adminNews.length === 0) {
         setShowingSamples(true);
         setNews(SAMPLE_NEWS);
@@ -87,9 +85,9 @@ export default function News() {
                   />
                   <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
                   <div className="absolute left-4 top-4 rounded-full bg-slate-950/85 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white shadow-lg">
-                    {formatNewsDate(item.datatime)}
+                    {formatNewsDate(readNewsDate(item))}
                   </div>
-                  {item.demo ? (
+                  {"demo" in item && item.demo ? (
                     <span className="absolute right-4 top-4 rounded-full bg-amber-500 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white shadow-lg">
                       Namuna
                     </span>
@@ -107,7 +105,7 @@ export default function News() {
                   </div>
                   <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
                     <span className="uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Texnopark yangiliklari</span>
-                    {!item.demo ? (
+                    {!("demo" in item && item.demo) ? (
                       <span className="font-semibold text-sky-600 transition group-hover:text-sky-800 dark:text-sky-400 dark:group-hover:text-sky-300">
                         Batafsil →
                       </span>
@@ -117,7 +115,7 @@ export default function News() {
               </>
             );
 
-            return item.demo ? (
+            return "demo" in item && item.demo ? (
               <div key={item.id} className={`${cardShellClass} cursor-default`}>
                 {cardInner}
               </div>

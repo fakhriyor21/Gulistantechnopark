@@ -1,46 +1,44 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getNews } from "../../server/Admin/Server";
 import { mediaFileUrl } from "../../lib/apiOrigin";
 import newsPlaceholder from "../../assets/images/home/itcourse.jpg";
 import { formatNewsDate } from "../../lib/utils";
 import { SAMPLE_NEWS, type PublicNewsItem } from "../../data/sampleNews";
+import { getAdminNews } from "@/lib/adminStorage";
+import type { AdminNewsItem } from "@/types/admin";
 
-function newsCoverSrc(item: PublicNewsItem): string {
-  if (item.demoImageSrc) return item.demoImageSrc;
-  if (item.file?.[0]) return mediaFileUrl(item.file[0]);
+function newsCoverSrc(item: PublicNewsItem | AdminNewsItem): string {
+  if ("demoImageSrc" in item && item.demoImageSrc) return item.demoImageSrc;
+  if ("imageUrl" in item && item.imageUrl) return item.imageUrl;
+  if ("file" in item && item.file?.[0]) return mediaFileUrl(item.file[0]);
   return newsPlaceholder;
 }
 
 export default function NewsPage() {
-  const [news, setNews] = useState<PublicNewsItem[]>([]);
+  const [news, setNews] = useState<(PublicNewsItem | AdminNewsItem)[]>([]);
   const [showingSamples, setShowingSamples] = useState(false);
 
   const visibleNews = news.slice(0, 3);
   const placeholderCount = Math.max(0, 3 - visibleNews.length);
 
   useEffect(() => {
-    const fetchNews = async () => {
-      const response = await getNews();
-      const raw = Array.isArray(response?.message) ? response.message : [];
-      const useSamples = raw.length === 0;
-      setShowingSamples(useSamples);
-      setNews(useSamples ? SAMPLE_NEWS : (raw as PublicNewsItem[]));
-    };
-    fetchNews();
+    const adminNews = getAdminNews();
+    const useSamples = adminNews.length === 0;
+    setShowingSamples(useSamples);
+    setNews(useSamples ? SAMPLE_NEWS : adminNews);
   }, []);
 
   const cardShellClass =
     "flex flex-col justify-between gap-4 rounded-xl border border-solid border-[#ffffff1a] bg-[#F4F6F9] py-5 backdrop-blur-[0.625rem] dark:bg-[#081E3F4D]";
 
-  const cardInner = (item: PublicNewsItem) => (
+  const cardInner = (item: PublicNewsItem | AdminNewsItem) => (
     <>
       <div className="flex min-h-32 flex-col gap-3 px-5">
         <div className="flex items-center justify-between gap-2">
           <p className="text-xs leading-[1.2rem] text-[#9CA1A9]">
-            {formatNewsDate(item.datatime)}
+            {formatNewsDate("datatime" in item ? item.datatime : item.createdAt)}
           </p>
-          {item.demo ? (
+          {"demo" in item && item.demo ? (
             <span className="shrink-0 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
               Namuna
             </span>
@@ -99,7 +97,7 @@ export default function NewsPage() {
           ) : null}
           <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {visibleNews.map((item) =>
-              item.demo ? (
+              "demo" in item && item.demo ? (
                 <div key={item.id} className={`relative ${cardShellClass} cursor-default`}>
                   {cardInner(item)}
                 </div>

@@ -1,14 +1,13 @@
 import React, { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
+import { isAdminAuthenticated } from "./lib/adminStorage";
 
 interface PrivateRouteProps {
   children: ReactNode;
 }
 
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
-  const adminToken = localStorage.getItem("adminToken");
-
-  if (!adminToken) {
+  if (!isAdminAuthenticated()) {
     return <Navigate to="/admin/login" replace />;
   }
 

@@ -1,75 +1,65 @@
 import { Link } from "react-router-dom";
-import NewsCard from "../../components/Admin/NewsCard";
 import NavbarAdmin from "../../components/Admin/Partials/Nabar";
-import { Button } from "../../components/ui/button";
 import { useEffect, useState } from "react";
-import { LiaSpinnerSolid } from "react-icons/lia";
-
-interface News {
-  id: string;
-  title: string;
-  description: string;
-  imageUrl: string;
-  date: string;
-}
+import { getAdminNews, getContactMessages } from "@/lib/adminStorage";
 
 export default function Dashboard() {
-  const [news, setNews] = useState<News[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [newsCount, setNewsCount] = useState(0);
+  const [messageCount, setMessageCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("newsItems");
-      const items: News[] = stored ? JSON.parse(stored) : [];
-      setNews(items);
-    } catch (error) {
-      console.error(error);
-      setNews([]);
-    } finally {
-      setLoading(false);
-    }
+    const news = getAdminNews();
+    const messages = getContactMessages();
+    setNewsCount(news.length);
+    setMessageCount(messages.length);
+    setUnreadCount(messages.filter((item) => !item.read).length);
   }, []);
-
-  const handleDelete = (id: string) => {
-    setNews((prevNews) => {
-      const updated = prevNews.filter((item) => item.id !== id);
-      localStorage.setItem("newsItems", JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#08101B]">
-        <LiaSpinnerSolid className="animate-spin text-blue-500 dark:text-white text-4xl" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#08101B] pb-16">
       <NavbarAdmin />
-      <div className="pt-24 px-5 lg:px-16">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">
-            Yangiliklarni boshqarish
-          </h1>
-          <Link to="/admin/add-news" className="w-full sm:w-auto">
-            <Button className="w-full sm:w-auto">Yangilik qo'shish</Button>
-          </Link>
+      <div className="mx-auto w-full max-w-screen-2xl px-4 pb-10 pt-24 sm:px-6 lg:px-10">
+        <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">Admin Dashboard</h1>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          Saytdagi localStorage ma'lumotlari bo'yicha umumiy holat.
+        </p>
+
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+            <p className="text-sm text-slate-500 dark:text-slate-400">Jami yangiliklar</p>
+            <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{newsCount}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+            <p className="text-sm text-slate-500 dark:text-slate-400">Jami xabarlar</p>
+            <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{messageCount}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+            <p className="text-sm text-slate-500 dark:text-slate-400">O'qilmagan xabarlar</p>
+            <p className="mt-2 text-3xl font-bold text-blue-700 dark:text-blue-400">{unreadCount}</p>
+          </div>
         </div>
 
-        {news.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-slate-300 bg-white/80 p-10 text-center text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-            Hozircha hech qanday yangilik yo'q.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-            {news.map((item) => (
-              <NewsCard key={item.id} news={item} onDelete={handleDelete} />
-            ))}
-          </div>
-        )}
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Link
+            className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-blue-400 dark:border-slate-700 dark:bg-slate-900"
+            to="/admin/news"
+          >
+            <p className="text-lg font-semibold text-slate-900 dark:text-white">News Management</p>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              Yangilik qo'shish, o'chirish va public news sahifasini boshqarish.
+            </p>
+          </Link>
+          <Link
+            className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-blue-400 dark:border-slate-700 dark:bg-slate-900"
+            to="/admin/messages"
+          >
+            <p className="text-lg font-semibold text-slate-900 dark:text-white">Messages Management</p>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              Contact form orqali yuborilgan xabarlarni ko'rish va boshqarish.
+            </p>
+          </Link>
+        </div>
       </div>
     </div>
   );

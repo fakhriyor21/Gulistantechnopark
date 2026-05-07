@@ -1,21 +1,22 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getByNews } from "../server/Admin/Server";
 import { LiaSpinnerSolid } from "react-icons/lia";
 import { mediaFileUrl } from "../lib/apiOrigin";
 import newsPlaceholder from "../assets/images/home/itcourse.jpg";
 import { formatNewsDate } from "../lib/utils";
+import { getAdminNews } from "@/lib/adminStorage";
+import { SAMPLE_NEWS } from "@/data/sampleNews";
 
 export default function NewsInfo() {
   interface News {
-    id: number;
+    id: string;
     title: string;
     description: string;
     datatime: string;
     file: string[];
   }
   const [news, setNews] = useState<News>({
-    id: 0,
+    id: "",
     title: "",
     description: "",
     datatime: "",
@@ -24,20 +25,30 @@ export default function NewsInfo() {
   const [loading, setLoading] = useState(true);
   const id = useParams().id;
   useEffect(() => {
-    const fetchNews = async () => {
-      const response = await getByNews(Number(id));
-      const raw = response?.message;
-      setNews(
-        raw && typeof raw === "object" && !Array.isArray(raw)
-          ? (raw as News)
-          : {
-              id: 0,
-              title: "",
-              description: "",
-              datatime: "",
-              file: [],
-            },
-      );
+    const fetchNews = () => {
+      const adminItem = getAdminNews().find((item) => item.id === id);
+      if (adminItem) {
+        setNews({
+          id: adminItem.id,
+          title: adminItem.title,
+          description: adminItem.description,
+          datatime: adminItem.createdAt,
+          file: adminItem.imageUrl ? [adminItem.imageUrl] : [],
+        });
+        setLoading(false);
+        return;
+      }
+
+      const sample = SAMPLE_NEWS.find((item) => String(item.id) === id);
+      if (sample) {
+        setNews({
+          id: String(sample.id),
+          title: sample.title,
+          description: sample.description,
+          datatime: sample.datatime,
+          file: sample.file ?? [],
+        });
+      }
       setLoading(false);
     };
     fetchNews();
@@ -66,7 +77,7 @@ export default function NewsInfo() {
             {news.file?.length ? (
               news.file.map((item, index) => (
                 <img
-                  src={mediaFileUrl(item)}
+                  src={item.startsWith("http") ? item : mediaFileUrl(item)}
                   onError={(e) => {
                     e.currentTarget.onerror = null;
                     e.currentTarget.src = newsPlaceholder;

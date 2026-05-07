@@ -5,6 +5,7 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
 import { useToast } from "../../hooks/use-toast";
+import { loginAdmin } from "@/lib/adminStorage";
 
 export default function AdminLogin() {
   const [username, setUsername] = useState("");
@@ -17,9 +18,7 @@ export default function AdminLogin() {
     e.preventDefault();
     setLoading(true);
 
-    // Demo login: admin / admin123
-    if (username === "admin" && password === "admin123") {
-      localStorage.setItem("adminToken", "demo_admin_token_" + Date.now());
+    if (loginAdmin(username, password)) {
       toast({
         title: "Kirish muvaffaqiyatli",
         description: "Admin panelga muvaffaqiyatli kirdingiz.",

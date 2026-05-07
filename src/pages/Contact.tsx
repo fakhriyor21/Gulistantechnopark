@@ -2,8 +2,7 @@ import { useRef, type MouseEvent, type ReactNode, useState } from "react";
 import logo from "../assets/images/logo/logo-crup.png";
 import { PageContent, PageHero } from "../components/Layout/PageLayout";
 import { cn } from "../lib/utils";
-import { collection, addDoc } from "firebase/firestore";
-import { db } from "../firebase/config"; // Firebase config faylni import qilamiz
+import { addContactMessage } from "@/lib/adminStorage";
 
 const MAX_TILT = 7;
 
@@ -88,15 +87,15 @@ export default function Contact() {
     setSubmitStatus(null);
 
     try {
-      // Firebase'ga ma'lumot yuborish
-      await addDoc(collection(db, "contacts"), {
-        lastName: formData.last_name,
+      addContactMessage({
+        id: Date.now(),
         firstName: formData.first_name,
+        lastName: formData.last_name,
         phone: formData.phone,
-        companyName: formData.company_name || "",
+        company: formData.company_name || "",
         message: formData.message || "",
         createdAt: new Date().toISOString(),
-        status: "new" // yangi xabar ekanligini belgilash
+        read: false,
       });
 
       // Muvaffaqiyatli yuborildi
