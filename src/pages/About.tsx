@@ -313,7 +313,7 @@ export default function About() {
 
         <section
           ref={marqueeRef}
-          className="relative left-1/2 right-1/2 mt-8 w-screen -translate-x-1/2 overflow-hidden border-y border-[#E7ECF5] bg-[#f7f9fd] dark:border-[#1d2b3c] dark:bg-[#08101B]"
+          className="relative left-1/2 right-1/2 mt-8 w-screen max-w-[100vw] -translate-x-1/2 overflow-hidden border-y border-[#E7ECF5] bg-[#f7f9fd] dark:border-[#1d2b3c] dark:bg-[#08101B]"
         >
           <div className="about-mosaic about-mosaic--hero relative isolate w-full overflow-hidden">
             <div

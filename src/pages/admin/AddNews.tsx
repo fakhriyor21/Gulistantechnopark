@@ -5,7 +5,14 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { useToast } from "../../hooks/use-toast";
-import { addNews } from "@/services/newsService";
+
+interface News {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  date: string;
+}
 
 export default function AddNews() {
   const [title, setTitle] = useState("");
@@ -14,12 +21,12 @@ export default function AddNews() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!title.trim() || !description.trim()) {
       toast({
-        title: "To‘ldiring",
+        title: "To'ldiring",
         description: "Iltimos yangilik sarlavhasi va tavsifini kiriting.",
         variant: "destructive",
       });
@@ -29,15 +36,21 @@ export default function AddNews() {
     setLoading(true);
 
     try {
-      await addNews({
+      const newNews: News = {
+        id: Date.now().toString(),
         title: title.trim(),
         description: description.trim(),
-        datatime: new Date().toISOString(),
-        file: [],
-      });
+        imageUrl: "https://via.placeholder.com/600x400?text=" + encodeURIComponent(title.trim().substring(0, 30)),
+        date: new Date().toLocaleDateString("uz-UZ"),
+      };
+
+      const stored = localStorage.getItem("newsItems");
+      const existing: News[] = stored ? JSON.parse(stored) : [];
+      const updated = [newNews, ...existing];
+      localStorage.setItem("newsItems", JSON.stringify(updated));
 
       toast({
-        title: "Yangilik qo‘shildi",
+        title: "Yangilik qo'shildi",
         description: "Yangilik muvaffaqiyatli saqlandi.",
       });
       navigate("/admin/dashboard");

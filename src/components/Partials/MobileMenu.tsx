@@ -24,7 +24,7 @@ export default function MobileMenu() {
   return (
     <div>
       {showServiceShortcuts && (
-        <div className="fixed bottom-[92px] left-1/2 z-20 flex w-[calc(100%-1rem)] max-w-xl -translate-x-1/2 gap-2 overflow-x-auto rounded-2xl border border-slate-200/80 bg-white/95 p-2 shadow-[0_18px_40px_-18px_rgba(14,36,70,0.7)] backdrop-blur dark:border-white/10 dark:bg-[#10243e]/90 xl:hidden">
+        <div className="fixed bottom-[92px] left-1/2 z-20 flex flex-wrap justify-center w-[calc(100%-1rem)] max-w-xl -translate-x-1/2 gap-2 rounded-2xl border border-slate-200/80 bg-white/95 p-2 shadow-[0_18px_40px_-18px_rgba(14,36,70,0.7)] backdrop-blur dark:border-white/10 dark:bg-[#10243e]/90 xl:hidden">
           {serviceQuickLinks.map((item) => (
             <NavLink
               key={item.to}
@@ -44,7 +44,7 @@ export default function MobileMenu() {
       )}
       <div className="fixed bottom-3 left-1/2 z-20 w-[calc(100%-0.75rem)] max-w-xl -translate-x-1/2 xl:hidden">
         <div className="rounded-[26px] border border-slate-200/80 bg-white/85 p-2 shadow-[0_22px_45px_-16px_rgba(12,38,74,0.7)] backdrop-blur-xl dark:border-white/15 dark:bg-[#0E1F34]/90">
-          <div className="flex items-end justify-between gap-1 overflow-x-auto pb-0.5 [-webkit-overflow-scrolling:touch]">
+          <div className="flex flex-wrap items-end justify-center gap-1 pb-0.5">
         <NavLink
           className={({ isActive }) =>
             isActive

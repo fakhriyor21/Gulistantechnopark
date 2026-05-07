@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router-dom";
 import Login from "./Login";
 import Dashboard from "./Dashboard";
 import AddNews from "./AddNews";
+import Messages from "./Messages";
 import PrivateRoute from "../../PrivateRoute";
 
 export default function AppAdmin() {
@@ -22,6 +23,14 @@ export default function AppAdmin() {
           element={
             <PrivateRoute>
               <AddNews />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="messages"
+          element={
+            <PrivateRoute>
+              <Messages />
             </PrivateRoute>
           }
         />

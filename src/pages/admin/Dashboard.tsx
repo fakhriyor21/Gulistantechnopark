@@ -1,59 +1,41 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import NewsCard from "../../components/Admin/NewsCard";
 import NavbarAdmin from "../../components/Admin/Partials/Nabar";
 import { Button } from "../../components/ui/button";
 import { useEffect, useState } from "react";
-import { getAllNews, type News } from "@/services/newsService";
 import { LiaSpinnerSolid } from "react-icons/lia";
-import { useToast } from "../../hooks/use-toast";
+
+interface News {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  date: string;
+}
 
 export default function Dashboard() {
   const [news, setNews] = useState<News[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
-    const storedUser = sessionStorage.getItem("userData");
-    if (!storedUser) {
-      navigate("/admin", { replace: true });
-      return;
-    }
-
     try {
-      const parsed = JSON.parse(storedUser) as { expiry?: number };
-      if (!parsed?.expiry || Date.now() > parsed.expiry) {
-        sessionStorage.removeItem("userData");
-        navigate("/admin", { replace: true });
-        return;
-      }
-    } catch {
-      sessionStorage.removeItem("userData");
-      navigate("/admin", { replace: true });
-      return;
+      const stored = localStorage.getItem("newsItems");
+      const items: News[] = stored ? JSON.parse(stored) : [];
+      setNews(items);
+    } catch (error) {
+      console.error(error);
+      setNews([]);
+    } finally {
+      setLoading(false);
     }
-
-    const fetchNews = async () => {
-      try {
-        const items = await getAllNews();
-        setNews(items);
-      } catch (error) {
-        console.error(error);
-        toast({
-          title: "Yangiliklarni olishda xatolik",
-          description: "Yangiliklar yuklanmadi. Iltimos, sahifani qayta yuklang.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchNews();
-  }, [navigate, toast]);
+  }, []);
 
   const handleDelete = (id: string) => {
-    setNews((prevNews) => prevNews.filter((item) => item.id !== id));
+    setNews((prevNews) => {
+      const updated = prevNews.filter((item) => item.id !== id);
+      localStorage.setItem("newsItems", JSON.stringify(updated));
+      return updated;
+    });
   };
 
   if (loading) {

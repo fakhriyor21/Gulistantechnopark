@@ -1,43 +1,49 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getNews } from "../server/Admin/Server";
 import { LiaSpinnerSolid } from "react-icons/lia";
-import { mediaFileUrl } from "../lib/apiOrigin";
-import newsPlaceholder from "../assets/images/home/itcourse.jpg";
 import { PageContent, PageHero } from "../components/Layout/PageLayout";
-import { formatNewsDate } from "../lib/utils";
 import { SAMPLE_NEWS, type PublicNewsItem } from "../data/sampleNews";
+import newsPlaceholder from "../assets/images/home/itcourse.jpg";
 
-function newsCoverSrc(item: PublicNewsItem): string {
-  if (item.demoImageSrc) return item.demoImageSrc;
-  if (item.file?.[0]) return mediaFileUrl(item.file[0]);
+interface AdminNews {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  date: string;
+}
+
+function newsCoverSrc(item: PublicNewsItem | AdminNews): string {
+  if ("demoImageSrc" in item && item.demoImageSrc) return item.demoImageSrc;
+  if ("imageUrl" in item && item.imageUrl) return item.imageUrl;
+  if ("file" in item && item.file?.[0]) return `data:image/jpeg;base64,${item.file[0]}`;
   return newsPlaceholder;
 }
 
 export default function News() {
-  const [news, setNews] = useState<PublicNewsItem[]>([]);
+  const [news, setNews] = useState<(PublicNewsItem | AdminNews)[]>([]);
   const [loading, setLoading] = useState(true);
   const [showingSamples, setShowingSamples] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-    const fetchNews = async () => {
-      try {
-        const response = await getNews();
-        if (!cancelled) {
-          const raw = Array.isArray(response?.message) ? response.message : [];
-          const useSamples = raw.length === 0;
-          setShowingSamples(useSamples);
-          setNews(useSamples ? SAMPLE_NEWS : (raw as PublicNewsItem[]));
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
+    try {
+      const stored = localStorage.getItem("newsItems");
+      const adminNews: AdminNews[] = stored ? JSON.parse(stored) : [];
+      
+      if (adminNews.length === 0) {
+        setShowingSamples(true);
+        setNews(SAMPLE_NEWS);
+      } else {
+        setShowingSamples(false);
+        setNews(adminNews);
       }
-    };
-    fetchNews();
-    return () => {
-      cancelled = true;
-    };
+    } catch (error) {
+      console.error(error);
+      setShowingSamples(true);
+      setNews(SAMPLE_NEWS);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const cardShellClass =
