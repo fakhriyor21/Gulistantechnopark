@@ -16,16 +16,13 @@ function newsCoverSrc(item: PublicNewsItem | AdminNewsItem): string {
 
 export default function NewsPage() {
   const [news, setNews] = useState<(PublicNewsItem | AdminNewsItem)[]>([]);
-  const [showingSamples, setShowingSamples] = useState(false);
 
   const visibleNews = news.slice(0, 3);
   const placeholderCount = Math.max(0, 3 - visibleNews.length);
 
   useEffect(() => {
     const adminNews = getAdminNews();
-    const useSamples = adminNews.length === 0;
-    setShowingSamples(useSamples);
-    setNews(useSamples ? SAMPLE_NEWS : adminNews);
+    setNews(adminNews.length === 0 ? SAMPLE_NEWS : adminNews);
   }, []);
 
   const cardShellClass =
@@ -38,11 +35,6 @@ export default function NewsPage() {
           <p className="text-xs leading-[1.2rem] text-[#9CA1A9]">
             {formatNewsDate("datatime" in item ? item.datatime : item.createdAt)}
           </p>
-          {"demo" in item && item.demo ? (
-            <span className="shrink-0 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-              Namuna
-            </span>
-          ) : null}
         </div>
         <div className="flex flex-col gap-3">
           <h2 className="line-clamp-2 break-words text-lg font-bold leading-[1.6rem] text-[#33445F] dark:text-white">
@@ -90,11 +82,6 @@ export default function NewsPage() {
           <h1 className="w-full text-center text-xl font-bold text-[#33445F] dark:text-white lg:text-3xl">
             Yangiliklar va maqolalar
           </h1>
-          {showingSamples ? (
-            <p className="w-full max-w-2xl text-center text-sm text-[#64748b] dark:text-slate-400">
-              Namunaviy kartalar — backend ulanishi bilan haqiqiy yangiliklar chiqadi.
-            </p>
-          ) : null}
           <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {visibleNews.map((item) =>
               "demo" in item && item.demo ? (

@@ -27,7 +27,7 @@ export default function AdminLogin() {
     } else {
       toast({
         title: "Kirishda xatolik",
-        description: "Login yoki parol noto'g'ri. Login: admin, Parol: admin123",
+        description: "Login yoki parol noto'g'ri.",
         variant: "destructive",
       });
     }
@@ -54,7 +54,6 @@ export default function AdminLogin() {
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={loading}
               />
-              <p className="text-xs text-slate-500 dark:text-slate-400">Demo: admin</p>
             </div>
 
             <div className="space-y-2">
@@ -67,20 +66,12 @@ export default function AdminLogin() {
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
               />
-              <p className="text-xs text-slate-500 dark:text-slate-400">Demo: admin123</p>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Yuklanmoqda..." : "Kirish"}
             </Button>
           </form>
-
-          <div className="mt-6 rounded-lg bg-blue-50 p-4 dark:bg-blue-950">
-            <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">Frontend-only Demo</p>
-            <p className="mt-1 text-xs text-blue-800 dark:text-blue-200">
-              Bu demo admin paneli. Ma'lumotlar localStorage'da saqlanadi.
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>

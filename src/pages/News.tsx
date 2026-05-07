@@ -22,22 +22,18 @@ function readNewsDate(item: PublicNewsItem | AdminNewsItem): string {
 export default function News() {
   const [news, setNews] = useState<(PublicNewsItem | AdminNewsItem)[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showingSamples, setShowingSamples] = useState(false);
 
   useEffect(() => {
     try {
       const adminNews = getAdminNews();
 
       if (adminNews.length === 0) {
-        setShowingSamples(true);
         setNews(SAMPLE_NEWS);
       } else {
-        setShowingSamples(false);
         setNews(adminNews);
       }
     } catch (error) {
       console.error(error);
-      setShowingSamples(true);
       setNews(SAMPLE_NEWS);
     } finally {
       setLoading(false);
@@ -63,12 +59,6 @@ export default function News() {
         subtitle="Texnopark hayoti, tadbirlar va startaplar haqida yangilanishlar."
       />
       <PageContent className="overflow-x-hidden pt-4">
-        {showingSamples ? (
-          <p className="mb-8 rounded-3xl border border-amber-200/80 bg-amber-50/90 px-5 py-4 text-center text-sm text-amber-950 shadow-sm dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-100">
-            Quyidagi kartalar dizayn uchun <strong>namunaviy</strong>. Backend ulanishi bilan ular haqiqiy e’lonlar bilan almashtiriladi.
-          </p>
-        ) : null}
-
         <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
           {news.map((item) => {
             const cardInner = (
@@ -87,11 +77,6 @@ export default function News() {
                   <div className="absolute left-4 top-4 rounded-full bg-slate-950/85 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white shadow-lg">
                     {formatNewsDate(readNewsDate(item))}
                   </div>
-                  {"demo" in item && item.demo ? (
-                    <span className="absolute right-4 top-4 rounded-full bg-amber-500 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white shadow-lg">
-                      Namuna
-                    </span>
-                  ) : null}
                 </div>
                 <div className="flex flex-col gap-4 px-6 py-6">
                   <div className="space-y-3">

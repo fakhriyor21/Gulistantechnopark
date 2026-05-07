@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { type ChangeEvent, useMemo, useState } from "react";
 import NavbarAdmin from "../../components/Admin/Partials/Nabar";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -11,11 +11,33 @@ export default function NewsManagement() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [uploadedImage, setUploadedImage] = useState("");
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const { toast } = useToast();
 
   const news = useMemo(() => getAdminNews(), [refreshKey]);
+
+  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Rasm formati noto'g'ri",
+        description: "Faqat rasm fayl tanlang.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      setUploadedImage(result);
+      setImageUrl("");
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -33,13 +55,17 @@ export default function NewsManagement() {
       id: crypto.randomUUID(),
       title: title.trim(),
       description: description.trim(),
-      imageUrl: imageUrl.trim() || "https://via.placeholder.com/600x400?text=News",
+      imageUrl:
+        uploadedImage ||
+        imageUrl.trim() ||
+        "https://via.placeholder.com/600x400?text=News",
       createdAt: new Date().toISOString(),
     };
     upsertAdminNews(item);
     setTitle("");
     setDescription("");
     setImageUrl("");
+    setUploadedImage("");
     setRefreshKey((prev) => prev + 1);
     setLoading(false);
     toast({ title: "Yangilik saqlandi", description: "Public news sahifada avtomatik ko'rinadi." });
@@ -52,12 +78,12 @@ export default function NewsManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-16 dark:bg-[#08101B]">
+    <div className="min-h-screen bg-gradient-to-b from-slate-100 to-slate-50 pb-16 dark:from-[#08101B] dark:to-[#050b14]">
       <NavbarAdmin />
       <div className="mx-auto w-full max-w-screen-2xl px-4 pb-10 pt-24 sm:px-6 lg:px-10">
         <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">News Management</h1>
         <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="space-y-2">
                 <Label htmlFor="title">Sarlavha</Label>
@@ -72,6 +98,15 @@ export default function NewsManagement() {
                   value={imageUrl}
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="imageFile">Rasm fayl yuklash</Label>
+                <Input id="imageFile" type="file" accept="image/*" onChange={handleImageUpload} />
+              </div>
+              {uploadedImage ? (
+                <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                  <img src={uploadedImage} alt="Preview" className="h-40 w-full object-cover" />
+                </div>
+              ) : null}
               <div className="space-y-2">
                 <Label htmlFor="description">Tavsif</Label>
                 <textarea
@@ -96,20 +131,23 @@ export default function NewsManagement() {
               news.map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+                  className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{item.title}</h2>
-                    <Button onClick={() => handleDelete(item.id)} size="sm" variant="destructive">
-                      O'chirish
-                    </Button>
+                  <img src={item.imageUrl} alt={item.title} className="h-40 w-full object-cover" />
+                  <div className="p-5">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{item.title}</h2>
+                      <Button onClick={() => handleDelete(item.id)} size="sm" variant="destructive">
+                        O'chirish
+                      </Button>
+                    </div>
+                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                      {new Date(item.createdAt).toLocaleString("uz-UZ")}
+                    </p>
+                    <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">
+                      {item.description}
+                    </p>
                   </div>
-                  <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                    {new Date(item.createdAt).toLocaleString("uz-UZ")}
-                  </p>
-                  <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">
-                    {item.description}
-                  </p>
                 </div>
               ))
             )}
