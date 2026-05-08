@@ -128,7 +128,7 @@ export default function Industries() {
       </div>
       <PageContent className="relative z-[2] pb-16 pt-8">
         <p className="mb-3 text-xs text-[#7d8ba4]">
-          <Link to="/services" className="hover:text-[#0B4397]">Xizmatlar</Link> / <span>{data.badgeTitle}</span>
+          <Link to="/services" className="hover:text-[#0B4397]">Xizmatlar</Link> / <span>{data.title}</span>
         </p>
         <div className="mb-5 flex flex-wrap gap-2">
           {TOP_TABS.map((tab) => (
