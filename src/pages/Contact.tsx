@@ -2,7 +2,7 @@ import { useRef, type MouseEvent, type ReactNode, useState } from "react";
 import logo from "../assets/images/logo/logo-crup.png";
 import { PageContent, PageHero } from "../components/Layout/PageLayout";
 import { cn } from "../lib/utils";
-import { addContactMessage } from "@/lib/adminStorage";
+import { submitContactMessage, canUseFirebase } from "@/services/firebaseCms";
 
 const MAX_TILT = 7;
 
@@ -87,15 +87,21 @@ export default function Contact() {
     setSubmitStatus(null);
 
     try {
-      addContactMessage({
-        id: Date.now(),
-        firstName: formData.first_name,
-        lastName: formData.last_name,
-        phone: formData.phone,
-        company: formData.company_name || "",
-        message: formData.message || "",
-        createdAt: new Date().toISOString(),
-        read: false,
+      if (!canUseFirebase()) {
+        setSubmitStatus({
+          type: "error",
+          message: "Firebase sozlanmagan. Iltimos, administrator bilan bog‘laning.",
+        });
+        setTimeout(() => setSubmitStatus(null), 5000);
+        setIsSubmitting(false);
+        return;
+      }
+      await submitContactMessage({
+        firstName: formData.first_name.trim(),
+        lastName: formData.last_name.trim(),
+        phone: formData.phone.trim(),
+        company: formData.company_name.trim() || "",
+        message: formData.message.trim() || "",
       });
 
       // Muvaffaqiyatli yuborildi

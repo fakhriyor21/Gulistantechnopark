@@ -216,6 +216,14 @@ export default function Navbar() {
               </li>
               <li className="rounded-xl p-1 transition-colors hover:bg-[#0b4397]/90 hover:text-white">
                 <Link
+                  to="/gallery"
+                  className={`${navItemClass} dark:text-white ${isScrolled ? "text-blue-900 hover:text-white" : "text-white"}`}
+                >
+                  Galereya
+                </Link>
+              </li>
+              <li className="rounded-xl p-1 transition-colors hover:bg-[#0b4397]/90 hover:text-white">
+                <Link
                   to="/contact"
                   className={`${navItemClass} dark:text-white ${isScrolled ? "text-blue-900 hover:text-white" : "text-white"}`}
                 >

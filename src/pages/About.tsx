@@ -1,4 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { PageContent, PageHero } from "../components/Layout/PageLayout";
+import { canUseFirebase, watchAboutCms } from "@/services/firebaseCms";
 import groupimage from "../assets/images/home/imagegroup.png";
 import director from "../assets/images/hero/director.png";
 import logo from "../assets/images/logo/logo-crup.png";
@@ -130,6 +132,30 @@ const mosaicRowClass =
   "relative shrink-0 h-[min(64vh,720px)] overflow-hidden sm:h-[min(70vh,800px)] lg:h-[min(76vh,900px)] xl:h-[min(82vh,1020px)]";
 
 export default function About() {
+  const [cmsOverride, setCmsOverride] = useState<{
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    bodyHtml: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!canUseFirebase()) return;
+    const unsub = watchAboutCms((d) => {
+      if (d && d.enabled && typeof d.bodyHtml === "string" && d.bodyHtml.trim().length > 0) {
+        setCmsOverride({
+          eyebrow: d.eyebrow ?? "",
+          title: d.title ?? "",
+          subtitle: d.subtitle ?? "",
+          bodyHtml: d.bodyHtml,
+        });
+        return;
+      }
+      setCmsOverride(null);
+    });
+    return unsub;
+  }, []);
+
   const marqueeRef = useRef<HTMLElement | null>(null);
   const row1TrackRef = useRef<HTMLDivElement | null>(null);
   const row2TrackRef = useRef<HTMLDivElement | null>(null);
@@ -177,6 +203,24 @@ export default function About() {
       window.removeEventListener("resize", handleScroll);
     };
   }, []);
+
+  if (cmsOverride) {
+    return (
+      <div className="min-h-screen overflow-x-hidden bg-[#f7f9fd] dark:bg-[#08101B]">
+        <PageHero
+          eyebrow={cmsOverride.eyebrow}
+          title={cmsOverride.title}
+          subtitle={cmsOverride.subtitle}
+        />
+        <PageContent className="mx-auto max-w-[860px] pb-20 pt-8">
+          <div
+            className="prose max-w-none text-[#33445F] dark:prose-invert dark:text-white"
+            dangerouslySetInnerHTML={{ __html: cmsOverride.bodyHtml }}
+          />
+        </PageContent>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#f7f9fd] dark:bg-[#08101B]">

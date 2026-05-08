@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { MdMiscellaneousServices } from "react-icons/md";
+import { MdMiscellaneousServices, MdPhotoLibrary } from "react-icons/md";
 import { AiFillHome } from "react-icons/ai";
 import { CiSquareInfo } from "react-icons/ci";
 // import { AiFillProject } from "react-icons/ai";
@@ -107,6 +107,17 @@ export default function MobileMenu() {
         >
               <IoNewspaperOutline className="text-[1.3rem]" />
               <span className={dockLabelClass}>Yangiliklar</span>
+        </NavLink>
+        <NavLink
+          className={({ isActive }) =>
+            isActive
+                  ? `${baseDockItemClass} -translate-y-1 bg-[#074196] text-white shadow-md dark:bg-sky-500 dark:text-slate-950`
+                  : `${baseDockItemClass} text-[#6E7985] hover:bg-[#edf3fb] dark:text-slate-300 dark:hover:bg-white/10`
+          }
+          to="/gallery"
+        >
+              <MdPhotoLibrary className="text-[1.3rem]" />
+              <span className={dockLabelClass}>Galereya</span>
         </NavLink>
         <NavLink
           className={({ isActive }) =>

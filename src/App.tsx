@@ -16,6 +16,7 @@ import AppAdmin from "./pages/admin/AppAdmin";
 import { Toaster } from "./components/ui/toaster";
 import NewsInfo from "./pages/NewsInfo";
 import Innox from "./pages/Innox";
+import Gallery from "./pages/Gallery";
 
 function isLikelySlowNetwork(): boolean {
   const nav = navigator as Navigator & {
@@ -116,6 +117,7 @@ function App() {
           <Route path="/projects" element={<Projects />} />
           <Route path="/news" element={<News />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/gallery" element={<Gallery />} />
           <Route path="/innox" element={<Innox />} />
           <Route path="/services/industries/:id" element={<Industries />} />
           <Route path="/projects/:id" element={<ProjectInfo />} />

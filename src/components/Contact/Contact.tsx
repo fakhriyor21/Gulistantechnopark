@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useToast } from "../../hooks/use-toast";
 import logo from "../../assets/images/logo/logo-crup.png";
-import { addContactMessage } from "@/lib/adminStorage";
-import type { ContactMessageItem } from "@/types/admin";
+import { submitContactMessage, canUseFirebase } from "@/services/firebaseCms";
 
 export default function Contact() {
   const [firstName, setFirstName] = useState("");
@@ -27,39 +26,44 @@ export default function Contact() {
 
     setLoading(true);
 
-    try {
-      const newMessage: ContactMessageItem = {
-        id: Date.now(),
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        phone: phone.trim(),
-        company: company.trim(),
-        message: message.trim(),
-        createdAt: new Date().toISOString(),
-        read: false,
-      };
-      addContactMessage(newMessage);
+    void (async () => {
+      try {
+        if (!canUseFirebase()) {
+          toast({
+            title: "Firebase sozlanmagan",
+            variant: "destructive",
+          });
+          return;
+        }
+        await submitContactMessage({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          phone: phone.trim(),
+          company: company.trim(),
+          message: message.trim(),
+        });
 
-      toast({
-        title: "Xabar yuborildi",
-        description: "Sizning xabringiz muvaffaqiyatli qabul qilindi.",
-      });
+        toast({
+          title: "Xabar yuborildi",
+          description: "Sizning xabringiz muvaffaqiyatli qabul qilindi.",
+        });
 
-      setFirstName("");
-      setLastName("");
-      setPhone("");
-      setCompany("");
-      setMessage("");
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Xatolik yuz berdi",
-        description: "Xabar yuborishda xatolik yuz berdi.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+        setFirstName("");
+        setLastName("");
+        setPhone("");
+        setCompany("");
+        setMessage("");
+      } catch (error) {
+        console.error(error);
+        toast({
+          title: "Xatolik yuz berdi",
+          description: "Xabar yuborishda xatolik yuz berdi.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    })();
   };
 
   return (
@@ -71,8 +75,7 @@ export default function Contact() {
         </div>
         <div className="flex w-full flex-col justify-between gap-4 lg:flex-row">
           <h1 className="text-xl font-bold text-[#33445F] dark:text-white lg:text-[1.75rem]">
-            Savollaringiz bormi? So'rov qoldiring va administratorimiz tez orada
-            siz bilan bog'lanadi!
+            Savollaringiz bormi? So'rov qoldiring va administratorimiz tez orada siz bilan bog'lanadi!
           </h1>
           <form className="flex w-full flex-col gap-4" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-4 lg:flex-row">

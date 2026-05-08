@@ -1,58 +1,31 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import Login from "./Login";
-import Dashboard from "./Dashboard";
-import NewsManagement from "./NewsManagement";
-import Messages from "./Messages";
-import PrivateRoute from "../../PrivateRoute";
-import { isAdminAuthenticated } from "@/lib/adminStorage";
+import { useAuth } from "@/contexts/AuthContext";
+import AdminRequireAuth from "./AdminRequireAuth";
+import AdminLayout from "./AdminLayout";
+import AdminLogin from "./AdminLogin";
+import AdminDashboard from "./AdminDashboard";
+import AdminMessages from "./AdminMessages";
+import AdminNews from "./AdminNews";
+import AdminAbout from "./AdminAbout";
 
 export default function AppAdmin() {
+  const { user } = useAuth();
+
   return (
     <Routes>
-      <Route
-        index
-        element={
-          isAdminAuthenticated() ? (
-            <Navigate to="/admin/dashboard" replace />
-          ) : (
-            <Navigate to="/admin/login" replace />
-          )
-        }
-      />
-      <Route path="login" element={<Login />} />
-      <Route
-        path="dashboard"
-        element={
-          <PrivateRoute>
-            <Dashboard />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="news"
-        element={
-          <PrivateRoute>
-            <NewsManagement />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="add-news"
-        element={
-          <PrivateRoute>
-            <Navigate to="/admin/news" replace />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="messages"
-        element={
-          <PrivateRoute>
-            <Messages />
-          </PrivateRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/admin" replace />} />
+      <Route index element={<Navigate to={user ? "dashboard" : "login"} replace />} />
+      <Route path="login" element={<AdminLogin />} />
+
+      <Route element={<AdminRequireAuth />}>
+        <Route element={<AdminLayout />}>
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="messages" element={<AdminMessages />} />
+          <Route path="news" element={<AdminNews />} />
+          <Route path="about" element={<AdminAbout />} />
+        </Route>
+      </Route>
+
+      <Route path="*" element={<Navigate to="." replace />} />
     </Routes>
   );
 }

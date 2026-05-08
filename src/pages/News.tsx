@@ -1,43 +1,84 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { collection, onSnapshot } from "firebase/firestore";
 import { LiaSpinnerSolid } from "react-icons/lia";
 import { PageContent, PageHero } from "../components/Layout/PageLayout";
 import { SAMPLE_NEWS, type PublicNewsItem } from "../data/sampleNews";
 import newsPlaceholder from "../assets/images/home/itcourse.jpg";
 import { formatNewsDate } from "../lib/utils";
-import { getAdminNews } from "@/lib/adminStorage";
-import type { AdminNewsItem } from "@/types/admin";
+import { canUseFirebase } from "@/services/firebaseCms";
+import { timestampToIsoString } from "@/lib/firestoreDates";
+import { db } from "@/firebase/config";
 
-function newsCoverSrc(item: PublicNewsItem | AdminNewsItem): string {
-  if ("demoImageSrc" in item && item.demoImageSrc) return item.demoImageSrc;
-  if ("imageUrl" in item && item.imageUrl) return item.imageUrl;
-  if ("file" in item && item.file?.[0]) return `data:image/jpeg;base64,${item.file[0]}`;
+/** Firestore yoki mahalliy kartalar uchun umumiy tip */
+type CardItem =
+  | (PublicNewsItem & { _src: "sample" })
+  | {
+      id: string;
+      title: string;
+      description: string;
+      imageUrl: string;
+      mediaType?: "image" | "video";
+      datatime: string;
+      demo?: false;
+      _src: "firestore";
+    };
+
+function cardCover(item: CardItem): string {
+  if (item._src === "sample" && item.demoImageSrc) return item.demoImageSrc;
+  if (item._src === "firestore") return item.imageUrl;
+  if (item.file?.[0]) return `data:image/jpeg;base64,${item.file[0]}`;
   return newsPlaceholder;
 }
 
-function readNewsDate(item: PublicNewsItem | AdminNewsItem): string {
-  return "datatime" in item ? item.datatime : item.createdAt;
+function isVideoCard(item: CardItem): boolean {
+  if (item._src !== "firestore") return false;
+  if (item.mediaType === "video") return true;
+  return /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(item.imageUrl);
 }
 
 export default function News() {
-  const [news, setNews] = useState<(PublicNewsItem | AdminNewsItem)[]>([]);
+  const [news, setNews] = useState<CardItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const adminNews = getAdminNews();
-
-      if (adminNews.length === 0) {
-        setNews(SAMPLE_NEWS);
-      } else {
-        setNews(adminNews);
-      }
-    } catch (error) {
-      console.error(error);
-      setNews(SAMPLE_NEWS);
-    } finally {
+    if (!canUseFirebase()) {
+      setNews(SAMPLE_NEWS.map((n) => ({ ...n, _src: "sample" as const })));
       setLoading(false);
+      return;
     }
+
+    const unsub = onSnapshot(
+      collection(db(), "news"),
+      (snapshot) => {
+        const onlyActive = snapshot.docs
+          .map((doc) => ({ id: doc.id, data: doc.data() as { active?: boolean; title: string; description: string; imageUrl: string; createdAt: any; mediaType?: "image" | "video" } }))
+          .filter((row) => row.data.active !== false);
+
+        if (onlyActive.length === 0) {
+          setNews(SAMPLE_NEWS.map((n) => ({ ...n, _src: "sample" as const })));
+        } else {
+          setNews(
+            onlyActive.map(({ id, data }) => ({
+              id,
+              title: data.title,
+              description: data.description,
+              imageUrl: data.imageUrl || newsPlaceholder,
+              datatime: timestampToIsoString(data.createdAt) || new Date().toISOString(),
+              mediaType: data.mediaType,
+              _src: "firestore" as const,
+            })),
+          );
+        }
+        setLoading(false);
+      },
+      () => {
+        setNews(SAMPLE_NEWS.map((n) => ({ ...n, _src: "sample" as const })));
+        setLoading(false);
+      },
+    );
+
+    return () => unsub();
   }, []);
 
   const cardShellClass =
@@ -53,44 +94,66 @@ export default function News() {
 
   return (
     <div className="min-h-screen dark:bg-[#08101B]">
-      <PageHero
-        eyebrow="Yangiliklar"
-        title="So‘nggi e’lonlar va voqealar"
-        subtitle="Texnopark hayoti, tadbirlar va startaplar haqida yangilanishlar."
-      />
-      <PageContent className="overflow-x-hidden pt-4">
-        <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
+      <div className="relative isolate overflow-hidden bg-[#0b1630]">
+        <img
+          src={newsPlaceholder}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover opacity-30"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#081426]/95 via-[#0B4397]/70 to-[#081426]/95" />
+        <PageHero
+          eyebrow="Yangiliklar"
+          title="So‘nggi e’lonlar va voqealar"
+          subtitle="Texnopark hayoti, tadbirlar va startaplar haqida yangilanishlar."
+        />
+      </div>
+      <PageContent className="overflow-x-hidden pb-12 pt-8">
+        <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
           {news.map((item) => {
             const cardInner = (
               <>
                 <div className="relative overflow-hidden">
-                  <img
-                    src={newsCoverSrc(item)}
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = newsPlaceholder;
-                    }}
-                    className="h-64 w-full object-cover transition duration-500 group-hover:scale-105"
-                    alt={item.title}
-                  />
+                  {isVideoCard(item) ? (
+                    <video
+                      src={cardCover(item)}
+                      className="h-64 w-full object-cover transition duration-500 group-hover:scale-105"
+                      muted
+                      controls
+                    />
+                  ) : (
+                    <img
+                      src={cardCover(item)}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = newsPlaceholder;
+                      }}
+                      className="h-64 w-full object-cover transition duration-500 group-hover:scale-105"
+                      alt={item.title}
+                    />
+                  )}
                   <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
                   <div className="absolute left-4 top-4 rounded-full bg-slate-950/85 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white shadow-lg">
-                    {formatNewsDate(readNewsDate(item))}
+                    {formatNewsDate(item.datatime)}
                   </div>
+                  {item.demo ? (
+                    <span className="absolute right-4 top-4 rounded-full bg-amber-500 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white shadow-lg">
+                      Namuna
+                    </span>
+                  ) : null}
                 </div>
                 <div className="flex flex-col gap-4 px-6 py-6">
                   <div className="space-y-3">
-                    <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                      {item.title}
-                    </h2>
+                    <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{item.title}</h2>
                     <p
                       className="line-clamp-3 text-sm leading-6 text-slate-600 dark:text-slate-300"
                       dangerouslySetInnerHTML={{ __html: item.description }}
                     />
                   </div>
                   <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
-                    <span className="uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Texnopark yangiliklari</span>
-                    {!("demo" in item && item.demo) ? (
+                    <span className="uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                      Texnopark yangiliklari
+                    </span>
+                    {!item.demo ? (
                       <span className="font-semibold text-sky-600 transition group-hover:text-sky-800 dark:text-sky-400 dark:group-hover:text-sky-300">
                         Batafsil →
                       </span>
@@ -100,12 +163,13 @@ export default function News() {
               </>
             );
 
-            return "demo" in item && item.demo ? (
-              <div key={item.id} className={`${cardShellClass} cursor-default`}>
+            const isDemo = item._src === "sample" && item.demo;
+            return isDemo ? (
+              <div key={String(item.id)} className={`${cardShellClass} cursor-default`}>
                 {cardInner}
               </div>
             ) : (
-              <Link key={item.id} className={`${cardShellClass} group`} to={`/news/${item.id}`}>
+              <Link key={String(item.id)} className={`${cardShellClass} group`} to={`/news/${item.id}`}>
                 {cardInner}
               </Link>
             );
