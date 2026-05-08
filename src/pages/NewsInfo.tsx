@@ -65,7 +65,7 @@ export default function NewsInfo() {
             description: data.description,
             datatime: timestampToIsoString(data.createdAt) || "",
             file: data.imageUrl ? [data.imageUrl] : [],
-            mediaType: data.mediaType === "video" ? "video" : "image",
+            mediaType: data.mediaType as "video" | "image" | undefined,
           }));
         const current = all.find((item) => item.id === id);
         if (current) setNews(current);
