@@ -5,6 +5,7 @@ import { LiaSpinnerSolid } from "react-icons/lia";
 import { PageContent, PageHero } from "../components/Layout/PageLayout";
 import { SAMPLE_NEWS, type PublicNewsItem } from "../data/sampleNews";
 import newsPlaceholder from "../assets/images/home/itcourse.jpg";
+import { mediaFileUrl } from "../lib/apiOrigin";
 import { formatNewsDate } from "../lib/utils";
 import { canUseFirebase } from "@/services/firebaseCms";
 import { timestampToIsoString } from "@/lib/firestoreDates";
@@ -26,7 +27,10 @@ type CardItem =
 
 function cardCover(item: CardItem): string {
   if (item._src === "sample" && item.demoImageSrc) return item.demoImageSrc;
-  if (item._src === "firestore") return item.imageUrl;
+  if (item._src === "firestore") {
+    if (item.imageUrl?.startsWith("http") || item.imageUrl?.startsWith("data:")) return item.imageUrl;
+    return mediaFileUrl(item.imageUrl);
+  }
   if (item.file?.[0]) return `data:image/jpeg;base64,${item.file[0]}`;
   return newsPlaceholder;
 }

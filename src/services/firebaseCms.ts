@@ -266,37 +266,212 @@ export async function uploadNewsMedia(
   }
 
   const mediaType = file.type.startsWith("video/") ? "video" : "image";
-  const path = `news/${Date.now()}_${file.name.replace(/[^\w.-]/g, "_")}`;
+  const uploadFile =
+    mediaType === "image" ? await optimizeImageForUploadWithTimeout(file, 10000) : file;
+
+  // Rasm uchun CORS muammolarini to'liq chetlab o'tish:
+  // optimizatsiyalangan data URL ni bevosita saqlaymiz (local + production).
+  if (mediaType === "image") {
+    onProgress?.(20);
+    const inlineUrl = await fileToDataUrl(uploadFile);
+    if (inlineUrl.length > 900_000) {
+      throw new Error(
+        "Rasm hajmi katta. Iltimos, kichikroq rasm tanlang (taxminan 600KB gacha).",
+      );
+    }
+    onProgress?.(100);
+    return { url: inlineUrl, mediaType };
+  }
+
+  const safeName = uploadFile.name || file.name;
+  const path = `news/${Date.now()}_${safeName.replace(/[^\w.-]/g, "_")}`;
   const sref = ref(storage(), path);
 
+  try {
+    onProgress?.(0);
+    const uploadedRef =
+      mediaType === "image"
+        ? await uploadImageOnce(sref, uploadFile, onProgress)
+        : await uploadWithResumableFallback(sref, uploadFile, onProgress);
+    const url = await getDownloadURL(uploadedRef);
+    onProgress?.(100);
+    return { url, mediaType };
+  } catch (err) {
+    // Storage upload yiqilsa (CORS, preflight, network va h.k.), rasmni inline data URL sifatida saqlaymiz.
+    if (mediaType === "image") {
+      const dataUrl = await fileToDataUrl(uploadFile);
+      if (dataUrl.length > 900_000) {
+        throw new Error(
+          "Rasm hajmi katta: CORS fallback uchun kichikroq rasm tanlang (taxminan 600KB gacha).",
+        );
+      }
+      onProgress?.(100);
+      return { url: dataUrl, mediaType };
+    }
+    const e = err as { code?: string; message?: string };
+    console.error("[uploadNewsMedia] Storage upload error", {
+      code: e.code,
+      message: e.message,
+      path,
+    });
+    throw err;
+  }
+}
+
+async function uploadImageOnce(
+  sref: ReturnType<typeof ref>,
+  uploadFile: File,
+  onProgress?: (percent: number) => void,
+) {
+  onProgress?.(10);
+  const snap = await uploadBytes(sref, uploadFile);
+  onProgress?.(95);
+  return snap.ref;
+}
+
+function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
-    const task = uploadBytesResumable(sref, file);
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error ?? new Error("FileReader xatosi"));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadWithResumableFallback(
+  sref: ReturnType<typeof ref>,
+  uploadFile: File,
+  onProgress?: (percent: number) => void,
+) {
+  try {
+    return await uploadWithResumable(sref, uploadFile, onProgress);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    // Progress event kelmay qoladigan brauzer/tarmoq holatlarida direct upload bilan qayta urinib ko'ramiz.
+    if (!/stall timeout|hard timeout/i.test(message)) throw err;
+    onProgress?.(5);
+    const snap = await uploadBytes(sref, uploadFile);
+    onProgress?.(95);
+    return snap.ref;
+  }
+}
+
+function uploadWithResumable(
+  sref: ReturnType<typeof ref>,
+  uploadFile: File,
+  onProgress?: (percent: number) => void,
+): Promise<ReturnType<typeof ref>> {
+  return new Promise((resolve, reject) => {
+    const task = uploadBytesResumable(sref, uploadFile);
+    const hardTimeoutMs = 180000;
+    const stallTimeoutMs = 45000;
+    let settled = false;
+    let hardTimer: ReturnType<typeof setTimeout> | null = null;
+    let stallTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const clearTimers = () => {
+      if (hardTimer) clearTimeout(hardTimer);
+      if (stallTimer) clearTimeout(stallTimer);
+      hardTimer = null;
+      stallTimer = null;
+    };
+
+    const fail = (error: Error) => {
+      if (settled) return;
+      settled = true;
+      clearTimers();
+      try {
+        task.cancel();
+      } catch {
+        // no-op
+      }
+      reject(error);
+    };
+
+    const armStallTimer = () => {
+      if (stallTimer) clearTimeout(stallTimer);
+      stallTimer = setTimeout(() => {
+        fail(new Error("Upload jarayoni to'xtab qoldi (stall timeout). Internet/Storage holatini tekshiring."));
+      }, stallTimeoutMs);
+    };
+
+    hardTimer = setTimeout(() => {
+      fail(new Error("Upload juda uzoq davom etdi (hard timeout). Qayta urinib ko'ring."));
+    }, hardTimeoutMs);
+    armStallTimer();
+
     task.on(
       "state_changed",
       (snapshot) => {
-        const pct = snapshot.totalBytes > 0 ? Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100) : 0;
+        armStallTimer();
+        const pct =
+          snapshot.totalBytes > 0
+            ? Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)
+            : 0;
         onProgress?.(pct);
       },
       (err) => {
-        const e = err as { code?: string; message?: string };
-        console.error("[uploadNewsMedia] Storage upload error", {
-          code: e.code,
-          message: e.message,
-          path,
-        });
+        if (settled) return;
+        settled = true;
+        clearTimers();
         reject(err);
       },
-      async () => {
-        try {
-          const url = await getDownloadURL(task.snapshot.ref);
-          onProgress?.(100);
-          resolve({ url, mediaType });
-        } catch (err) {
-          reject(err);
-        }
+      () => {
+        if (settled) return;
+        settled = true;
+        clearTimers();
+        resolve(task.snapshot.ref);
       },
     );
   });
+}
+
+async function optimizeImageForUploadWithTimeout(file: File, timeoutMs: number): Promise<File> {
+  try {
+    return await Promise.race<File>([
+      optimizeImageForUpload(file),
+      new Promise<File>((resolve) => {
+        setTimeout(() => resolve(file), timeoutMs);
+      }),
+    ]);
+  } catch {
+    return file;
+  }
+}
+
+async function optimizeImageForUpload(file: File): Promise<File> {
+  // Faqat rasm bo'lsa va brauzer canvas qo'llasa optimizatsiya qilamiz.
+  if (!file.type.startsWith("image/")) return file;
+  if (typeof window === "undefined") return file;
+
+  try {
+    if (typeof createImageBitmap !== "function") return file;
+    const bitmap = await createImageBitmap(file);
+    const maxSide = 1600;
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    const targetW = Math.max(1, Math.round(bitmap.width * scale));
+    const targetH = Math.max(1, Math.round(bitmap.height * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = targetW;
+    canvas.height = targetH;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(bitmap, 0, 0, targetW, targetH);
+
+    const blob: Blob | null = await new Promise((resolve) =>
+      canvas.toBlob(resolve, "image/webp", 0.82),
+    );
+    if (!blob) return file;
+
+    // Agar optimizatsiya foyda bermasa originalni qoldiramiz.
+    if (blob.size >= file.size) return file;
+
+    const base = file.name.replace(/\.[^.]+$/, "") || "image";
+    return new File([blob], `${base}.webp`, { type: "image/webp" });
+  } catch {
+    return file;
+  }
 }
 
 export async function uploadGalleryFile(file: File, caption: string): Promise<string> {

@@ -9,6 +9,10 @@ import { SAMPLE_NEWS } from "@/data/sampleNews";
 import { timestampToIsoString } from "@/lib/firestoreDates";
 
 export default function NewsInfo() {
+  const resolveMediaSrc = (value: string) => {
+    if (value.startsWith("http") || value.startsWith("data:")) return value;
+    return mediaFileUrl(value);
+  };
   interface NewsShape {
     id: string;
     title: string;
@@ -110,13 +114,13 @@ export default function NewsInfo() {
                 news.mediaType === "video" || /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(item) ? (
                   <video
                     key={index}
-                    src={item.startsWith("http") ? item : mediaFileUrl(item)}
+                    src={resolveMediaSrc(item)}
                     controls
                     className="w-full rounded-xl bg-black object-contain xl:max-h-[800px]"
                   />
                 ) : (
                   <img
-                    src={item.startsWith("http") ? item : mediaFileUrl(item)}
+                    src={resolveMediaSrc(item)}
                     onError={(e) => {
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = newsPlaceholder;

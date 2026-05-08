@@ -29,8 +29,11 @@ export default function AdminNews() {
   const [active, setActive] = useState(true);
   const [editId, setEditId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [selectedFileName, setSelectedFileName] = useState("");
+  const [uploadFailed, setUploadFailed] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -77,6 +80,8 @@ export default function AdminNews() {
     setMediaType("image");
     setActive(true);
     setEditId(null);
+    setSelectedFileName("");
+    setUploadFailed(false);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -96,9 +101,27 @@ export default function AdminNews() {
       return;
     }
 
+    if (selectedFileName && !imageUrl) {
+      toast({
+        title: "Rasm yuklanmagan",
+        description: "Avval rasmni muvaffaqiyatli yuklang, keyin Qo‘shish ni bosing.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (uploadFailed) {
+      toast({
+        title: "Upload xatosi bor",
+        description: "Rasmni qayta tanlab yuklang yoki faylni almashtiring.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const finalImageUrl = imageUrl.trim() || "";
     const finalMediaType = mediaType === "video" || looksLikeVideo(finalImageUrl) ? "video" : "image";
-    setBusy(true);
+    setSaving(true);
     try {
       if (editId) {
         console.log("[AdminNews] updateNews call", { editId, finalImageUrl, finalMediaType });
@@ -128,7 +151,7 @@ export default function AdminNews() {
       console.error("[AdminNews] submit error", e);
       toast({ title: "Saqlashda xatolik", description: "Maydonlar va Firebase ruxsatlarini tekshiring.", variant: "destructive" });
     } finally {
-      setBusy(false);
+      setSaving(false);
       console.log("[AdminNews] submit finished");
     }
   };
@@ -168,23 +191,32 @@ export default function AdminNews() {
       toast({ title: "Faqat rasm yoki video tanlang", variant: "destructive" });
       return;
     }
-    setBusy(true);
+    setSelectedFileName(f.name);
+    setUploadFailed(false);
+    setUploading(true);
     setUploadProgress(0);
     try {
       console.log("[AdminNews] uploadNewsMedia call", { name: f.name, type: f.type, size: f.size });
       const uploaded = await uploadNewsMedia(f, (p) => setUploadProgress(p));
       setImageUrl(uploaded.url);
       setMediaType(uploaded.mediaType);
+      setUploadFailed(false);
       console.log("[AdminNews] uploadNewsMedia success", uploaded);
       toast({ title: uploaded.mediaType === "video" ? "Video yuklandi" : "Rasm yuklandi" });
     } catch (err) {
       console.error("[AdminNews] uploadNewsMedia error (bypass to text-only allowed)", err);
-      // Storage ishlamasa ham yangilikni rasmsiz saqlashga ruxsat beramiz.
+      // Foydalanuvchi fayl tanlagan bo'lsa, upload xatoni aniq belgilab qo'yamiz.
       setImageUrl("");
       setMediaType("image");
-      toast({ title: "Rasm yuklanmadi, lekin yangilikni rasmsiz saqlashingiz mumkin", variant: "destructive" });
+      setUploadFailed(true);
+      const message = err instanceof Error ? err.message : String(err);
+      toast({
+        title: "Rasm yuklanmadi",
+        description: message.slice(0, 220),
+        variant: "destructive",
+      });
     } finally {
-      setBusy(false);
+      setUploading(false);
       setUploadProgress(0);
       e.target.value = "";
     }
@@ -207,9 +239,15 @@ export default function AdminNews() {
           </div>
           <div className="space-y-2">
             <Label>Yoki fayl yuklash (rasm/video)</Label>
-            <Input type="file" accept="image/*,video/*" disabled={busy} onChange={(e) => void onFile(e)} />
+            <Input type="file" accept="image/*,video/*" disabled={uploading || saving} onChange={(e) => void onFile(e)} />
+            {selectedFileName ? (
+              <p className="text-xs text-slate-500">
+                Tanlangan fayl: {selectedFileName}
+                {uploadFailed ? " (yuklanmadi)" : imageUrl ? " (yuklandi)" : ""}
+              </p>
+            ) : null}
           </div>
-          {busy && uploadProgress > 0 ? (
+          {uploading && uploadProgress > 0 ? (
             <div className="space-y-1">
               <p className="text-xs text-slate-500">Yuklanmoqda: {uploadProgress}%</p>
               <div className="h-2 w-full rounded bg-slate-200">
@@ -245,12 +283,12 @@ export default function AdminNews() {
             <Button
               className="bg-[#0B4397]"
               type="submit"
-              disabled={busy || !title.trim() || !description.trim()}
+              disabled={uploading || saving || !title.trim() || !description.trim()}
             >
-              {editId ? "Saqlash" : "Qo‘shish"}
+              {uploading ? "Fayl yuklanmoqda..." : saving ? "Saqlanmoqda..." : editId ? "Saqlash" : "Qo‘shish"}
             </Button>
             {editId ? (
-              <Button type="button" variant="outline" disabled={busy} onClick={() => resetForm()}>
+              <Button type="button" variant="outline" disabled={uploading || saving} onClick={() => resetForm()}>
                 Bekor qilish
               </Button>
             ) : null}

@@ -1,4 +1,4 @@
-﻿import { initializeApp, type FirebaseApp } from "firebase/app";
+import { initializeApp, type FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
@@ -13,10 +13,8 @@ function readEnv(key: string): string {
 function normalizeStorageBucket(bucket: string, projectId: string): string {
   const trimmed = bucket.trim();
   if (!trimmed) return `${projectId}.appspot.com`;
-  // Firebase SDK kutadigan default bucket odatda *.appspot.com bo'ladi.
-  if (trimmed.endsWith(".firebasestorage.app")) {
-    return trimmed.replace(/\.firebasestorage\.app$/i, ".appspot.com");
-  }
+  // Env'da berilgan bucket nomini o'zgartirmaymiz:
+  // yangi loyihalarda *.firebasestorage.app ham to'g'ri bo'lishi mumkin.
   return trimmed;
 }
 
