@@ -13,27 +13,27 @@ const serviceMenuItems = [
   {
     title: "Startaplar",
     description: "Inkubatsiya, mentorlik va investor aloqalari",
-    to: "/services/industries/startaplar-uchun-qollab-quvvatlash",
+    to: "/services",
   },
   {
     title: "FABLAB",
     description: "Prototiplash va zamonaviy ishlab chiqarish uskunalari",
-    to: "/services/industries/fablab-ishlab-chiqarish",
+    to: "/services",
   },
   {
     title: "Qishloq xo'jaligi",
     description: "Agrotexnologiyalar va avtomatlashtirish yechimlari",
-    to: "/services/industries/qishloq-xojaligi",
+    to: "/services",
   },
   {
     title: "Xalqaro aloqalar",
     description: "Hamkorlik, grantlar va bozorga chiqish imkoniyatlari",
-    to: "/services/industries/xalqaro-aloqalar",
+    to: "/services",
   },
   {
     title: "Dasturiy ta'minot",
     description: "Veb, mobil va integratsion platformalar",
-    to: "/services/industries/dasturiy-taminot",
+    to: "/services",
   },
 ];
 
@@ -212,14 +212,6 @@ export default function Navbar() {
                   className={`${navItemClass} dark:text-white ${isScrolled ? "text-blue-900 hover:text-white" : "text-white"}`}
                 >
                   Yangiliklar
-                </Link>
-              </li>
-              <li className="rounded-xl p-1 transition-colors hover:bg-[#0b4397]/90 hover:text-white">
-                <Link
-                  to="/gallery"
-                  className={`${navItemClass} dark:text-white ${isScrolled ? "text-blue-900 hover:text-white" : "text-white"}`}
-                >
-                  Galereya
                 </Link>
               </li>
               <li className="rounded-xl p-1 transition-colors hover:bg-[#0b4397]/90 hover:text-white">

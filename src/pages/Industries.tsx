@@ -1,407 +1,294 @@
-import { useRef, type CSSProperties } from "react";
-import { Link, useLocation } from "react-router-dom";
-import serviceData from "../data/serviceData";
-import { FaCheckCircle } from "react-icons/fa";
-import NotFound from "./NotFound";
-import Contact from "../components/Contact/Contact";
-import Quote from "../components/Quote/Quote";
-import { PageContent } from "../components/Layout/PageLayout";
-import { RiSparklingFill } from "react-icons/ri";
-import { FiArrowRight, FiTarget } from "react-icons/fi";
+import { useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { PageContent } from "@/components/Layout/PageLayout";
+import director from "@/assets/images/hero/director.png";
+import citation from "@/assets/images/hero/citation.svg";
+import logo from "@/assets/images/logo/logo-crup.png";
+import serviceData from "@/data/serviceData";
+import { useToast } from "@/hooks/use-toast";
+import { canUseFirebase, submitContactMessage } from "@/services/firebaseCms";
 
-type IndustryTheme = {
-  pageBgLight: string;
-  pageBgDark: string;
-  accent: string;
-  accentSoft: string;
-  accentDark: string;
-  gridLight: string;
-  gridDark: string;
-  ringLight: string;
-  ringDark: string;
-  glowA: string;
-  glowB: string;
-  glowC: string;
-  orbA: string;
-  orbB: string;
-  orbC: string;
-  orbD: string;
-  scene: "startup" | "fablab" | "agro" | "global" | "software";
-  mark: string;
-  submark: string;
-};
-
-const INDUSTRY_THEME: Record<string, IndustryTheme> = {
-  "startaplar-uchun-qollab-quvvatlash": {
-    pageBgLight: "linear-gradient(180deg,#dce7ff 0%,#edf3ff 38%,#f7faff 100%)",
-    pageBgDark: "linear-gradient(180deg,#060a1b 0%,#0b1430 48%,#081126 100%)",
-    accent: "#4f63ff",
-    accentSoft: "#edf0ff",
-    accentDark: "#93a6ff",
-    gridLight: "rgba(74,90,225,0.62)",
-    gridDark: "rgba(137,162,255,0.32)",
-    ringLight: "rgba(72,88,213,0.74)",
-    ringDark: "rgba(147,171,255,0.33)",
-    glowA: "#7788ff99",
-    glowB: "#7658ff96",
-    glowC: "#74afff8c",
-    orbA: "radial-gradient(circle_at_30%_30%,#cad2ff_0%,#6275ff_72%)",
-    orbB: "radial-gradient(circle_at_30%_30%,#d7f1ff_0%,#5f7dff_72%)",
-    orbC: "radial-gradient(circle_at_30%_30%,#b7cbff_0%,#4f58d1_72%)",
-    orbD: "radial-gradient(circle_at_30%_30%,#e1ebff_0%,#6e8bff_72%)",
-    scene: "startup",
-    mark: "STARTUP",
-    submark: "INNOVATION LAB",
-  },
-  "fablab-ishlab-chiqarish": {
-    pageBgLight: "linear-gradient(180deg,#d5f7ff 0%,#ebfaff 38%,#f7fdff 100%)",
-    pageBgDark: "linear-gradient(180deg,#04131a 0%,#08222e 48%,#071a25 100%)",
-    accent: "#0a94b8",
-    accentSoft: "#e7f7fb",
-    accentDark: "#73dbf6",
-    gridLight: "rgba(12,138,176,0.6)",
-    gridDark: "rgba(71,216,255,0.3)",
-    ringLight: "rgba(10,129,165,0.72)",
-    ringDark: "rgba(106,232,255,0.34)",
-    glowA: "#46cce88f",
-    glowB: "#5aa8ff91",
-    glowC: "#7be6ff89",
-    orbA: "radial-gradient(circle_at_30%_30%,#b9f2ff_0%,#2ca9d4_72%)",
-    orbB: "radial-gradient(circle_at_30%_30%,#d4f8ff_0%,#2a93c0_72%)",
-    orbC: "radial-gradient(circle_at_30%_30%,#ace8ff_0%,#3279c1_72%)",
-    orbD: "radial-gradient(circle_at_30%_30%,#d8f9ff_0%,#3da3cf_72%)",
-    scene: "fablab",
-    mark: "FABLAB",
-    submark: "PROTOTYPE ZONE",
-  },
-  "qishloq-xojaligi": {
-    pageBgLight: "linear-gradient(180deg,#dff6df 0%,#eff9ef 38%,#f8fcf8 100%)",
-    pageBgDark: "linear-gradient(180deg,#071509 0%,#0f2614 48%,#0c1d11 100%)",
-    accent: "#3f9c4f",
-    accentSoft: "#ebf7ee",
-    accentDark: "#85e39a",
-    gridLight: "rgba(45,136,58,0.58)",
-    gridDark: "rgba(125,229,148,0.29)",
-    ringLight: "rgba(47,129,63,0.74)",
-    ringDark: "rgba(129,234,154,0.32)",
-    glowA: "#6fd87993",
-    glowB: "#57bc9b8f",
-    glowC: "#89e4b08a",
-    orbA: "radial-gradient(circle_at_30%_30%,#d8f4da_0%,#57af69_72%)",
-    orbB: "radial-gradient(circle_at_30%_30%,#ecffef_0%,#4d9864_72%)",
-    orbC: "radial-gradient(circle_at_30%_30%,#c9efcc_0%,#3b8a56_72%)",
-    orbD: "radial-gradient(circle_at_30%_30%,#def8e0_0%,#4faa74_72%)",
-    scene: "agro",
-    mark: "AGRO",
-    submark: "GREEN TECH",
-  },
-  "xalqaro-aloqalar": {
-    pageBgLight: "linear-gradient(180deg,#dcebff 0%,#edf5ff 38%,#f7faff 100%)",
-    pageBgDark: "linear-gradient(180deg,#071126 0%,#0b1f3f 48%,#081631 100%)",
-    accent: "#2e78db",
-    accentSoft: "#e8f1ff",
-    accentDark: "#8ec7ff",
-    gridLight: "rgba(38,106,190,0.6)",
-    gridDark: "rgba(99,180,255,0.3)",
-    ringLight: "rgba(43,102,176,0.74)",
-    ringDark: "rgba(115,196,255,0.34)",
-    glowA: "#69a4ff96",
-    glowB: "#588fff93",
-    glowC: "#7ecfff8a",
-    orbA: "radial-gradient(circle_at_30%_30%,#cfe3ff_0%,#4e83df_72%)",
-    orbB: "radial-gradient(circle_at_30%_30%,#dff5ff_0%,#4f79d5_72%)",
-    orbC: "radial-gradient(circle_at_30%_30%,#c7d9ff_0%,#395aba_72%)",
-    orbD: "radial-gradient(circle_at_30%_30%,#e1ecff_0%,#4a7ad6_72%)",
-    scene: "global",
-    mark: "GLOBAL",
-    submark: "INTERNATIONAL LINK",
-  },
-  "dasturiy-taminot": {
-    pageBgLight: "linear-gradient(180deg,#dde7ff 0%,#eef3ff 38%,#f7f9ff 100%)",
-    pageBgDark: "linear-gradient(180deg,#070d20 0%,#111a35 48%,#0a1330 100%)",
-    accent: "#365de6",
-    accentSoft: "#ebefff",
-    accentDark: "#93b2ff",
-    gridLight: "rgba(48,83,201,0.62)",
-    gridDark: "rgba(119,157,255,0.33)",
-    ringLight: "rgba(49,81,191,0.76)",
-    ringDark: "rgba(135,172,255,0.34)",
-    glowA: "#6887ff98",
-    glowB: "#616ff08f",
-    glowC: "#76bcff8c",
-    orbA: "radial-gradient(circle_at_30%_30%,#d6e0ff_0%,#4f6fe0_72%)",
-    orbB: "radial-gradient(circle_at_30%_30%,#e4f2ff_0%,#5877e2_72%)",
-    orbC: "radial-gradient(circle_at_30%_30%,#c6d1ff_0%,#4258bd_72%)",
-    orbD: "radial-gradient(circle_at_30%_30%,#dfe9ff_0%,#5077df_72%)",
-    scene: "software",
-    mark: "CODE",
-    submark: "SOFTWARE SYSTEMS",
-  },
-};
-
-function SceneByIndustry({ theme }: { theme: IndustryTheme }) {
-  if (theme.scene === "software") {
-    return (
-      <>
-        <span className="industry-3d-code-panel left-[4%] top-[14%]" />
-        <span className="industry-3d-code-panel right-[6%] top-[12%] [animation-delay:0.9s]" />
-        <span className="industry-3d-bracket left-[18%] top-[34%]">&lt;/&gt;</span>
-        <span className="industry-3d-bracket right-[15%] top-[44%]">{`{ }`}</span>
-      </>
-    );
-  }
-  if (theme.scene === "fablab") {
-    return (
-      <>
-        <span className="industry-3d-hex left-[8%] top-[20%]" />
-        <span className="industry-3d-hex right-[12%] top-[52%] [animation-delay:1.2s]" />
-        <span className="industry-3d-gear left-[38%] top-[70%]" />
-      </>
-    );
-  }
-  if (theme.scene === "agro") {
-    return (
-      <>
-        <span className="industry-3d-leaf left-[8%] top-[24%]" />
-        <span className="industry-3d-leaf right-[8%] top-[40%] [animation-delay:1s]" />
-        <span className="industry-3d-hill left-[24%] bottom-[4%]" />
-      </>
-    );
-  }
-  if (theme.scene === "global") {
-    return (
-      <>
-        <span className="industry-3d-globe left-[6%] top-[18%]" />
-        <span className="industry-3d-globe right-[8%] top-[52%] [animation-delay:1.3s]" />
-        <span className="industry-3d-orbit-line left-[34%] top-[70%]" />
-      </>
-    );
-  }
-  return (
-    <>
-      <span className="industry-3d-rocket left-[6%] top-[18%]" />
-      <span className="industry-3d-rocket right-[10%] top-[56%] [animation-delay:1.4s]" />
-      <span className="industry-3d-launch-line left-[38%] top-[72%]" />
-    </>
-  );
-}
+const TOP_TABS = [
+  { label: "Startap", slug: "startaplar-uchun-qollab-quvvatlash" },
+  { label: "FABLAB", slug: "fablab-ishlab-chiqarish" },
+  { label: "Dasturiy", slug: "dasturiy-taminot" },
+  { label: "Agro", slug: "qishloq-xojaligi" },
+];
 
 export default function Industries() {
-  const sceneRef = useRef<HTMLDivElement>(null);
-  const location = useLocation();
-  const id = location.pathname.split("/")[3];
-  const industries = serviceData.find((item) => item.id === id);
-  if (industries === undefined) {
-    return <NotFound />;
+  const { id } = useParams<{ id: string }>();
+  const data = serviceData.find((item) => item.id === id);
+  const featureChips = data?.section.data.slice(0, 3) ?? [];
+  const { toast } = useToast();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [company, setCompany] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-[#f4f7fd] dark:bg-[#08101B]">
+        <PageContent className="py-16">
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 dark:border-[#172333] dark:bg-[#0d1829]">
+            <h1 className="text-2xl font-bold text-[#33445F] dark:text-white">Yo'nalish topilmadi</h1>
+            <Link
+              to="/services"
+              className="mt-4 inline-flex rounded-lg bg-[#0B4397] px-4 py-2 text-sm font-semibold text-white hover:bg-[#09367a]"
+            >
+              Xizmatlarga qaytish
+            </Link>
+          </div>
+        </PageContent>
+      </div>
+    );
   }
 
-  const sectionCount = industries.section.data.length;
-  const shortHighlights = industries.section.data.slice(0, 3).map((item) => item.title);
-  const theme = INDUSTRY_THEME[industries.id] ?? INDUSTRY_THEME["dasturiy-taminot"];
-  const themeVars = {
-    "--industry-page-bg-light": theme.pageBgLight,
-    "--industry-page-bg-dark": theme.pageBgDark,
-    "--industry-grid-light": theme.gridLight,
-    "--industry-grid-dark": theme.gridDark,
-    "--industry-ring-light": theme.ringLight,
-    "--industry-ring-dark": theme.ringDark,
-    "--industry-ring-glow-light": theme.ringLight,
-    "--industry-ring-glow2-light": theme.gridLight,
-    "--industry-ring-glow-dark": theme.ringDark,
-    "--industry-ring-glow2-dark": theme.gridDark,
-    "--industry-accent": theme.accent,
-    "--industry-accent-soft": theme.accentSoft,
-    "--industry-accent-dark": theme.accentDark,
-  } as CSSProperties;
-  const onPointerMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el = sceneRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    el.style.setProperty("--industry-tilt-x", (x * 3.2).toFixed(2));
-    el.style.setProperty("--industry-tilt-y", (-y * 2.6).toFixed(2));
-  };
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!firstName.trim() || !lastName.trim() || !phone.trim()) {
+      toast({
+        title: "Majburiy maydonlar to'ldirilmadi",
+        description: "Iltimos, Ism, Familiya va Telefon raqamni kiriting.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  const onPointerLeave = () => {
-    const el = sceneRef.current;
-    if (!el) return;
-    el.style.setProperty("--industry-tilt-x", "0");
-    el.style.setProperty("--industry-tilt-y", "0");
+    setLoading(true);
+    try {
+      if (!canUseFirebase()) {
+        toast({
+          title: "Firebase sozlanmagan",
+          description: "Iltimos, administrator bilan bog'laning.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await submitContactMessage({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        phone: phone.trim(),
+        company: company.trim(),
+        message: message.trim(),
+      });
+
+      toast({
+        title: "So'rov yuborildi",
+        description: "Xabaringiz admin panelga yuborildi.",
+      });
+      setShowSuccessOverlay(true);
+      setTimeout(() => setShowSuccessOverlay(false), 3000);
+
+      setFirstName("");
+      setLastName("");
+      setPhone("");
+      setCompany("");
+      setMessage("");
+    } catch (error) {
+      console.error("Industries form submit error:", error);
+      toast({
+        title: "Xatolik yuz berdi",
+        description: "So'rov yuborishda xatolik bo'ldi. Qayta urinib ko'ring.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="industry-3d-scene relative min-h-screen overflow-hidden" style={themeVars}>
-      <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden opacity-20 blur-sm">
-        <span className="industry-3d-grid" />
-        <span className="industry-3d-radial-grid" />
-        <span className="industry-3d-grid-vlines" />
-        <span className="industry-3d-glow left-[8%] top-[16%] h-[220px] w-[220px]" style={{ backgroundColor: theme.glowA }} />
-        <span
-          className="industry-3d-glow right-[10%] top-[32%] h-[260px] w-[260px] [animation-delay:1.1s]"
-          style={{ backgroundColor: theme.glowB }}
-        />
-        <span
-          className="industry-3d-glow left-[32%] bottom-[8%] h-[300px] w-[300px] [animation-delay:2s]"
-          style={{ backgroundColor: theme.glowC }}
-        />
-
-        <span className="industry-3d-ring left-[-110px] top-[120px] h-[320px] w-[320px]" />
-        <span className="industry-3d-ring right-[-130px] top-[38%] h-[360px] w-[360px]" />
-        <span className="industry-3d-ring bottom-[-150px] left-[30%] h-[420px] w-[420px]" />
-        <span className="industry-3d-wireframe left-[4%] top-[24%]" />
-        <span className="industry-3d-wireframe right-[6%] top-[56%] [animation-delay:1.8s]" />
-        <span className="industry-3d-wireframe left-[40%] top-[74%] [animation-delay:0.9s]" />
-        <span className="industry-3d-wireframe industry-3d-wireframe-strong left-[72%] top-[18%] [animation-delay:0.4s]" />
-        <span className="industry-3d-wireframe industry-3d-wireframe-strong left-[16%] top-[62%] [animation-delay:2.4s]" />
-        <SceneByIndustry theme={theme} />
-        <span className="industry-3d-theme-mark">{theme.mark}</span>
-        <span className="industry-3d-theme-submark">{theme.submark}</span>
-        <span className="industry-3d-theme-band">{theme.mark} · {theme.submark} · {theme.mark}</span>
-
-        <span className="industry-3d-orb left-[8%] top-[20%] h-24 w-24" style={{ backgroundImage: theme.orbA }} />
-        <span className="industry-3d-orb right-[14%] top-[16%] h-20 w-20 [animation-delay:1.2s]" style={{ backgroundImage: theme.orbB }} />
-        <span className="industry-3d-orb right-[20%] bottom-[22%] h-16 w-16 [animation-delay:2.2s]" style={{ backgroundImage: theme.orbC }} />
-        <span className="industry-3d-orb left-[22%] bottom-[14%] h-28 w-28 [animation-delay:0.6s]" style={{ backgroundImage: theme.orbD }} />
-      </div>
-
-      <div
-        ref={sceneRef}
-        className="industry-3d-world relative z-10"
-        style={{ "--industry-tilt-x": 0, "--industry-tilt-y": 0 } as CSSProperties}
-        onMouseMove={onPointerMove}
-        onMouseLeave={onPointerLeave}
-      >
-      <div className="px-4 pt-20 sm:px-6 lg:px-10">
-        <div className="industry-3d-plane mx-auto max-w-5xl" style={{ "--industry-z": "25px" } as CSSProperties}>
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--industry-accent)]/35 bg-[var(--industry-accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--industry-accent)] dark:border-[var(--industry-accent-dark)]/40 dark:bg-white/10 dark:text-[var(--industry-accent-dark)]">
-            <RiSparklingFill className="text-sm" />
-            Xizmat yo'nalishi
-          </div>
-          <div className="mb-6 flex flex-wrap items-center gap-2 text-xs text-[#617592] dark:text-slate-300">
-            <Link to="/services" className="hover:text-[var(--industry-accent)] dark:hover:text-[var(--industry-accent-dark)]">
-              Xizmatlar
-            </Link>
-            <span>/</span>
-            <span className="font-medium text-[#1f3559] dark:text-white">{industries.title}</span>
-          </div>
-        </div>
-
-        <div
-          className="industry-3d-plane industry-3d-glass relative mx-auto my-3 max-w-3xl overflow-hidden rounded-2xl lg:my-5"
-          style={{ "--industry-z": "70px" } as CSSProperties}
-        >
-          <img
-            alt={industries.title}
-            src={industries.icon}
-            className="absolute left-0 top-0 size-full rounded-2xl object-cover opacity-65"
-          />
-          <div className="absolute left-0 top-0 size-full rounded-2xl bg-[linear-gradient(110deg,rgba(5,26,58,0.9)_5%,rgba(10,53,115,0.75)_45%,rgba(0,0,0,0.6)_100%)]" />
-          <div className="relative grid gap-3 px-4 py-5 lg:grid-cols-[1fr_auto] lg:items-end lg:px-5 lg:py-5">
-            <div className="industry-3d-depth max-w-lg">
-              <h1 className="text-lg font-bold leading-snug text-white md:text-xl lg:text-[1.45rem] drop-shadow-[0_10px_18px_rgba(0,0,0,0.3)]">
-                {industries.name}
-              </h1>
-              <p className="mt-1.5 max-w-lg text-xs leading-relaxed text-slate-100/90 md:text-[13px]">
-                {industries.description}
-              </p>
-            </div>
-
-            <div className="industry-3d-depth-sm grid max-w-[min(100%,17rem)] shrink-0 grid-cols-2 gap-2 text-white lg:max-w-[18rem]">
-              <div className="industry-3d-glass rounded-xl border border-white/25 bg-white/10 p-2.5 text-center backdrop-blur">
-                <p className="text-[10px] uppercase tracking-[0.12em] text-sky-100/80">Bo'limlar</p>
-                <p className="mt-0.5 text-lg font-bold">{sectionCount}</p>
-              </div>
-              <div className="industry-3d-glass rounded-xl border border-white/25 bg-white/10 p-2.5 text-center backdrop-blur">
-                <p className="text-[10px] uppercase tracking-[0.12em] text-sky-100/80">Yo'nalish</p>
-                <p className="mt-0.5 text-[11px] font-semibold leading-snug">{industries.title}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div style={{ "--industry-z": "45px" } as React.CSSProperties}>
-        <PageContent className="industry-3d-plane pt-2">
-        <div className="industry-3d-glass grid gap-5 rounded-2xl border border-slate-200/70 bg-white/80 p-5 pb-8 md:grid-cols-[1fr_auto] md:items-center dark:border-slate-700 dark:bg-[#0d1829]/75">
-          <div className="flex flex-col gap-3">
-            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[#d2def0] bg-[#f3f7fd] px-3 py-1 text-xs font-semibold text-[#33588f] dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
-              <FiTarget />
-              Strategik imkoniyatlar
-            </div>
-            <h2 className="text-xl font-bold text-[#33445F] dark:text-white md:text-2xl">
-              {industries.section.title}
-            </h2>
-          </div>
-          <Link
-            to="/contact"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[var(--industry-accent)] bg-[var(--industry-accent)] px-5 text-sm font-semibold text-white transition hover:brightness-95 dark:text-[#030712]"
-          >
-            Hamkorlikni boshlash
-            <FiArrowRight />
-          </Link>
-        </div>
-
-        <div className="mt-6 grid gap-3 rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-[#0d1829]/90 md:grid-cols-3">
-          {shortHighlights.map((title) => (
-            <div
-              key={title}
-              className="industry-3d-card rounded-xl bg-[var(--industry-accent-soft)] px-3 py-3 text-sm font-medium text-[#2e4b76] dark:bg-white/5 dark:text-slate-200"
+    <div className="relative min-h-screen overflow-hidden bg-[#eaf7fd] text-[#33445F] dark:bg-[#08101B] dark:text-white">
+      {showSuccessOverlay ? (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#031227]/55 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-xl rounded-2xl border border-emerald-300 bg-white p-8 text-center shadow-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">Success</p>
+            <h2 className="mt-2 text-3xl font-extrabold text-[#0f2a4f] sm:text-4xl">Admin panelga yuborildi</h2>
+            <p className="mt-3 text-base text-slate-600">
+              So'rovingiz muvaffaqiyatli jo'natildi. Administrator tez orada siz bilan bog'lanadi.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowSuccessOverlay(false)}
+              className="mt-6 inline-flex rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
             >
-              {title}
-            </div>
+              Yopish
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="pointer-events-none absolute inset-0 opacity-45" aria-hidden>
+        <div className="absolute -left-24 top-[220px] h-[360px] w-[360px] rounded-[80px] border-4 border-[#d8ebf7]" />
+        <div className="absolute right-[10%] top-[320px] h-[260px] w-[320px] rounded-[70px] border-4 border-[#d8ebf7]" />
+        <div className="absolute left-[28%] top-[560px] h-[280px] w-[360px] rounded-[90px] border-4 border-[#d8ebf7]" />
+      </div>
+      <PageContent className="relative z-[2] pb-16 pt-8">
+        <p className="mb-3 text-xs text-[#7d8ba4]">
+          <Link to="/services" className="hover:text-[#0B4397]">Xizmatlar</Link> / <span>{data.badgeTitle}</span>
+        </p>
+        <div className="mb-5 flex flex-wrap gap-2">
+          {TOP_TABS.map((tab) => (
+            <Link
+              key={tab.slug}
+              to={`/services/industries/${tab.slug}`}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                tab.slug === data.id
+                  ? "bg-[#0B4397] text-white"
+                  : "bg-[#e5edf9] text-[#35598a] hover:bg-[#d8e5f8] dark:bg-[#12223a] dark:text-slate-200"
+              }`}
+            >
+              {tab.label}
+            </Link>
           ))}
         </div>
 
-        <div className="flex flex-col gap-4 pb-2 pt-8">
-          <h2 className="text-xl font-bold text-[#33445F] dark:text-white md:text-2xl">
-            Xizmat doirasidagi imkoniyatlar
-          </h2>
-          <p className="max-w-3xl text-sm leading-relaxed text-[#64748b] dark:text-white/80 md:text-[0.9375rem]">
+        <section className="relative overflow-hidden rounded-2xl border border-[#d9e7f5] bg-[#083f8f] text-white shadow-xl">
+          <img src={data.icon} alt={data.badgeTitle} className="absolute inset-0 h-full w-full object-cover opacity-35" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0a2f66]/90 to-[#203b6f]/65" />
+          <div className="relative z-[2] grid gap-4 p-6 lg:grid-cols-[1fr_auto] lg:items-end">
+            <div>
+              <h1 className="max-w-3xl text-2xl font-bold leading-tight lg:text-[2rem]">{data.name}</h1>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-white/90">{data.description}</p>
+            </div>
+            <div className="flex gap-3">
+              <div className="rounded-xl border border-white/30 bg-white/10 px-4 py-2 text-center">
+                <p className="text-[10px] uppercase tracking-wider text-white/80">Bo'limlar</p>
+                <p className="text-2xl font-bold">{data.section.data.length}</p>
+                <p className="text-[10px] uppercase tracking-wider text-white/80">Yo'nalish</p>
+              </div>
+              <div className="rounded-xl border border-white/30 bg-white/10 px-4 py-2 text-xs font-semibold text-white/90">
+                {data.title}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-2xl border border-[#e0ebf6] bg-white p-5 shadow-sm dark:border-[#1b2e48] dark:bg-[#0d1829]">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="inline-flex items-center rounded-full bg-[#edf4fb] px-3 py-1 text-xs text-[#7b8ba5]">
+                Strategik imkoniyatlar
+              </p>
+              <h2 className="mt-3 text-2xl font-bold lg:text-3xl">{data.section.title}</h2>
+            </div>
+            <button className="rounded-xl bg-[#08a0d4] px-5 py-2 text-sm font-semibold text-white hover:bg-[#0a8bbc]">
+              Hamkorlikni boshlash
+            </button>
+          </div>
+        </section>
+
+        <section className="mt-4 grid gap-3 md:grid-cols-3">
+          {featureChips.map((chip) => (
+            <div key={chip.title} className="rounded-lg border border-[#e3ebf5] bg-[#f4f8fc] px-4 py-2 text-sm font-medium text-[#5f7292]">
+              {chip.title}
+            </div>
+          ))}
+        </section>
+
+        <section className="mt-8">
+          <h3 className="text-xl font-bold">Xizmat doirasidagi imkoniyatlar</h3>
+          <p className="mt-2 text-sm text-[#5d7193] dark:text-slate-300">
             Har bir yo'nalish bo'yicha amaliy yechimlar va mutaxassislar qo'llab-quvvatlovi taqdim etiladi.
           </p>
-        </div>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {data.section.data.map((item) => (
+              <div key={item.title} className="rounded-2xl border border-[#dce9f6] bg-white p-5 shadow-sm dark:border-[#1b2e48] dark:bg-[#0d1829]">
+                <div className="mb-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#e8f4ff] text-[#19a5d5]">
+                  •
+                </div>
+                <p className="text-lg font-semibold">{item.title}</p>
+                <p className="mt-2 text-sm leading-6 text-[#5d7193] dark:text-slate-300">{item.description}</p>
+                <button className="mt-4 text-sm font-semibold text-[#0ea5d5] hover:text-[#0b84ab]">
+                  Batafsil maslahat →
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
 
-        <div className="grid w-full grid-cols-1 gap-5 pt-6 md:grid-cols-2 xl:grid-cols-3">
-          {industries.section.data.map((item, index) => (
-            <div
-              className="industry-3d-card group flex h-full flex-col rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-[0_14px_30px_-18px_rgba(28,60,113,0.45)] transition-all hover:border-[#a7c1e8] dark:border-white/10 dark:bg-[#0d1829]/90 dark:hover:border-sky-500/35"
-              key={index}
-            >
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--industry-accent-soft)] text-[var(--industry-accent)] dark:bg-[var(--industry-accent-dark)]/20 dark:text-[var(--industry-accent-dark)]">
-                <FaCheckCircle className="text-lg" />
-              </div>
-              <div className="mt-4 text-lg font-bold text-[#354866] dark:text-white">
-                {item.title}
-              </div>
-              <div className="mt-2 flex-1 text-sm leading-relaxed text-[#64748b] dark:text-white/80">
-                {item.description}
-              </div>
-              <Link
-                to="/contact"
-                className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-[var(--industry-accent)] transition group-hover:gap-2 dark:text-[var(--industry-accent-dark)]"
-              >
-                Batafsil maslahat
-                <FiArrowRight />
-              </Link>
+        <section
+          style={{ background: "linear-gradient(0deg, rgba(62,74,231,0.88) 0%, rgba(7,65,150,1) 100%)" }}
+          className="relative my-10 overflow-hidden rounded-xl border border-[#095e9e4d] p-8"
+        >
+          <img src={citation} alt="" className="mb-3 h-6 w-6 opacity-60" />
+          <p className="text-xl text-white">{data.section.description}</p>
+          <div className="mt-6 flex items-center gap-4">
+            <div className="flex items-center justify-center rounded-full border border-white/70">
+              <img src={director} alt="Direktor" className="h-12 w-12 rounded-full object-cover p-[2px]" />
             </div>
-          ))}
-        </div>
-      </PageContent>
+            <div>
+              <h3 className="font-medium text-white">Mamatov Avaz Muxiddinovich</h3>
+              <p className="text-sm text-white/85">Guliston yoshlar texnoparki direktori</p>
+            </div>
+          </div>
+          <img src={logo} alt="" className="pointer-events-none absolute -bottom-4 -right-10 w-40 opacity-25" />
+        </section>
 
-      <div className="industry-3d-plane relative px-4 pb-10 pt-10 lg:px-10 lg:pt-16" style={{ "--industry-z": "32px" } as CSSProperties}>
-        <div className="mx-auto max-w-6xl">
-          <Quote title={industries.section.description} />
-        </div>
-      </div>
-      <div className="industry-3d-plane relative px-4 pb-16 lg:px-10" style={{ "--industry-z": "24px" } as CSSProperties}>
-        <div className="mx-auto max-w-6xl">
-          <Contact />
-        </div>
-      </div>
-      </div>
-      </div>
+        <section className="relative overflow-hidden rounded-xl border border-[#E7ECF5] bg-[#F4F6F9] p-6 dark:border-[#172333] dark:bg-[#081e3f4d] sm:p-12">
+          <div className="flex flex-col gap-2">
+            <div className="text-[#EF7F1A]">Ariza formasi</div>
+            <div className="h-px w-full bg-gradient-to-r from-[#e4edf8] to-transparent" />
+          </div>
+          <div className="mt-4 flex w-full flex-col justify-between gap-6 lg:flex-row">
+            <h3 className="max-w-xl text-3xl font-bold leading-tight text-[#33445F] dark:text-white">
+              Savollaringiz bormi? So'rov qoldiring va administratorimiz tez orada siz bilan bog'lanadi!
+            </h3>
+            <form className="flex w-full flex-col gap-4" onSubmit={handleFormSubmit}>
+              <div className="flex flex-col gap-4 lg:flex-row">
+                <input
+                  className="w-full rounded-md border border-[#E7ECF5] bg-transparent px-4 py-3 text-sm"
+                  placeholder="Familiya"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  disabled={loading}
+                />
+                <input
+                  className="w-full rounded-md border border-[#E7ECF5] bg-transparent px-4 py-3 text-sm"
+                  placeholder="Ism"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+              <div className="flex flex-col gap-4">
+                <input
+                  className="w-full rounded-md border border-[#E7ECF5] bg-transparent px-4 py-3 text-sm"
+                  placeholder="Telefon raqam"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  disabled={loading}
+                />
+                <input
+                  className="w-full rounded-md border border-[#E7ECF5] bg-transparent px-4 py-3 text-sm"
+                  placeholder="Kompaniya/Tashkilot nomi"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  disabled={loading}
+                />
+                <textarea
+                  className="min-h-[126px] w-full rounded-md border border-[#E7ECF5] bg-transparent px-4 py-3 text-sm"
+                  placeholder="Savolingizning qisqacha tavsifi"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="mt-2 rounded-md border border-[#443ee4] bg-[#171779] px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {loading ? "Yuborilmoqda..." : "Ma'lumotlarni yuborish"}
+              </button>
+            </form>
+          </div>
+          <img src={logo} alt="" className="pointer-events-none absolute -bottom-6 -left-16 h-[205px] w-[218px] opacity-5 lg:h-[305px] lg:w-[318px]" />
+        </section>
+      </PageContent>
     </div>
   );
 }
-

@@ -1,20 +1,16 @@
-import { useEffect, useRef, useState, type ComponentType, type CSSProperties, type ReactNode } from "react";
+import { useRef, type ComponentType, type CSSProperties, type ReactNode } from "react";
 import { BsFillRocketTakeoffFill } from "react-icons/bs";
 import { MdOutlineMiscellaneousServices, MdDeveloperMode, MdWeb } from "react-icons/md";
 import { PiPlantFill } from "react-icons/pi";
 import { RiGlobalFill } from "react-icons/ri";
 import { FaComputer } from "react-icons/fa6";
 import { FaPeopleArrows } from "react-icons/fa";
-import { Link } from "react-router-dom";
 import { cn } from "../lib/utils";
-import { collection, onSnapshot } from "firebase/firestore";
-import { canUseFirebase } from "@/services/firebaseCms";
-import { getServiceIcon } from "@/data/serviceIconMap";
-import { db } from "@/firebase/config";
+import { Link } from "react-router-dom";
 
 type ServiceIcon = ComponentType<{ className?: string }>;
-
-type LocalServiceItem = {
+type DisplayItem = {
+  id: string;
   title: string;
   description: string;
   slug: string;
@@ -22,74 +18,75 @@ type LocalServiceItem = {
   floatDelay: number;
 };
 
-const FALLBACK_SERVICES: LocalServiceItem[] = [
+const MAX_TILT = 7;
+
+const STATIC_SERVICES: DisplayItem[] = [
   {
+    id: "startap",
     title: "Startaplar",
     description:
-      "G‘oyangizni haqiqatga aylantirish uchun inkubator, mentorlik va investorlar bilan bog‘lanish — startap ekotizimidagi to‘liq qo‘llab-quvvatlash.",
+      "G‘oyangizni haqiqatga aylantirish uchun inkubator, mentorlik va investorlar bilan bog‘lanish.",
     slug: "startaplar-uchun-qollab-quvvatlash",
     icon: BsFillRocketTakeoffFill,
     floatDelay: 0,
   },
   {
+    id: "fablab",
     title: "FABLAB",
-    description:
-      "3D printer, lazer kesish va prototiplash: zamonaviy uskunalar va mutaxassislar yordamida loyihangizni tezda sinovdan o‘tkazing.",
+    description: "3D printer, lazer kesish va prototiplash uchun zamonaviy texnik baza.",
     slug: "fablab-ishlab-chiqarish",
     icon: MdOutlineMiscellaneousServices,
-    floatDelay: 0.4,
+    floatDelay: 0.3,
   },
   {
+    id: "agro",
     title: "Qishloq xo‘jaligi",
-    description:
-      "Agro texnologiyalar va ishlab chiqarishni optimallashtirish — qishloq xo‘jaligida innovatsiyalarni joriy qilish bo‘yicha yordam.",
+    description: "Agro yo‘nalishda samaradorlikni oshirish uchun texnologik yechimlar.",
     slug: "qishloq-xojaligi",
     icon: PiPlantFill,
-    floatDelay: 0.8,
+    floatDelay: 0.6,
   },
   {
+    id: "xalqaro",
     title: "Xalqaro aloqalar",
-    description:
-      "Xalqaro hamkorlik, grantlar va tajriba almashinuvi — texnologik rivojlanish va yangi bozorlarni ochish imkoniyatlari.",
+    description: "Grantlar, hamkorlik va xalqaro bozorga chiqish bo‘yicha yordam.",
     slug: "xalqaro-aloqalar",
     icon: RiGlobalFill,
-    floatDelay: 1.2,
+    floatDelay: 0.9,
   },
   {
+    id: "software",
     title: "Dasturiy ta’minot",
-    description:
-      "Backend va frontend, integratsiyalar va qo‘llab-quvvatlash — biznes maqsadlaringizga mos barqaror dasturiy yechimlar.",
+    description: "Veb, mobil va backend yechimlar orqali raqamli mahsulotlar yaratish.",
     slug: "dasturiy-taminot",
     icon: FaComputer,
     floatDelay: 0.2,
   },
   {
+    id: "mobile",
     title: "Mobil ilovalar",
-    description:
-      "iOS va Android uchun zamonaviy interfeys va API integratsiyasi — raqobatbardosh mobil mahsulot ishlab chiqish.",
+    description: "iOS va Android platformalari uchun zamonaviy ilovalar ishlab chiqish.",
     slug: "dasturiy-taminot",
     icon: MdDeveloperMode,
-    floatDelay: 0.6,
+    floatDelay: 0.45,
   },
   {
+    id: "it-consulting",
     title: "IT Konsalting",
-    description:
-      "Raqamlashtirish strategiyasi va axborot texnologiyalaridan samarali foydalanish — jarayonlarni tahlil qilish va yaxshilash.",
+    description: "Jarayonlarni tahlil qilish va raqamlashtirish bo‘yicha strategik maslahatlar.",
     slug: "dasturiy-taminot",
     icon: FaPeopleArrows,
-    floatDelay: 1,
+    floatDelay: 0.75,
   },
   {
+    id: "web",
     title: "Veb dasturlash",
-    description:
-      "Korporativ saytlar va veb-ilovalar: tez yuklanish, qulay interfeys va mobil qurilmalarga moslashgan dizayn.",
+    description: "Korporativ saytlar va veb-ilovalar: tezkor, qulay va moslashuvchan.",
     slug: "dasturiy-taminot",
     icon: MdWeb,
-    floatDelay: 1.4,
+    floatDelay: 1,
   },
 ];
-
-const MAX_TILT = 7;
 
 function ServiceTiltCard({ children, className }: { children: ReactNode; className?: string }) {
   const ref = useRef<HTMLElement>(null);
@@ -129,42 +126,8 @@ function ServiceTiltCard({ children, className }: { children: ReactNode; classNa
   );
 }
 
-type DisplayItem = LocalServiceItem & { key: string };
-
 export default function Services() {
-  const [items, setItems] = useState<DisplayItem[]>(() =>
-    FALLBACK_SERVICES.map((s, i) => ({ ...s, key: `fb-${i}` })),
-  );
-
-  useEffect(() => {
-    if (!canUseFirebase()) return;
-    const fallback = FALLBACK_SERVICES.map((s, i) => ({ ...s, key: `fb-${i}` }));
-
-    const unsub = onSnapshot(collection(db(), "services"), (snapshot) => {
-      const docs = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        data: doc.data() as ServiceItem,
-      }));
-
-      const sorted = docs.sort((a, b) => (a.data.order ?? 0) - (b.data.order ?? 0));
-      if (sorted.length === 0) {
-        setItems(fallback);
-        return;
-      }
-
-      const mapped = sorted.map(({ id, data }) => ({
-        title: data.title,
-        description: data.description,
-        slug: data.linkPath.replace(/^industries\//, ""),
-        icon: getServiceIcon(data.iconId),
-        floatDelay: (data.order ?? 0) * 0.12,
-        key: id,
-      }));
-      setItems(mapped);
-    });
-
-    return () => unsub();
-  }, []);
+  const items = STATIC_SERVICES;
 
   return (
     <div
@@ -176,7 +139,7 @@ export default function Services() {
     >
       <section className="mx-auto max-w-2xl px-5 pb-4 pt-20 text-center sm:px-6 lg:px-8 lg:pt-24">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#074196] dark:text-sky-400 sm:text-sm">
-          Xizmatlar
+          Xizmat yo'nalishlari
         </p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-[#1e293b] dark:text-white md:text-3xl">
           Innovatsion xizmatlar
@@ -197,7 +160,7 @@ export default function Services() {
             const Icon = item.icon;
             return (
               <div
-                key={item.key}
+                key={item.id}
                 className="services-page-float h-full"
                 style={
                   {
@@ -218,11 +181,7 @@ export default function Services() {
                   </p>
                   <Link
                     to={`/services/industries/${item.slug}`}
-                    className={cn(
-                      "inline-flex h-12 w-full items-center justify-center rounded-[10px] border text-sm font-semibold transition-colors",
-                      "border-[#074196]/35 bg-[#074196]/8 text-[#074196] hover:border-[#074196] hover:bg-[#074196] hover:text-white",
-                      "dark:border-sky-400/35 dark:bg-sky-400/10 dark:text-sky-400 dark:hover:border-violet-300/80 dark:hover:bg-violet-500/45 dark:hover:text-white",
-                    )}
+                    className="inline-flex h-12 w-full items-center justify-center rounded-[10px] border border-[#074196]/35 bg-[#074196]/8 text-sm font-semibold text-[#074196] transition hover:border-[#074196] hover:bg-[#074196] hover:text-white"
                   >
                     Batafsil
                   </Link>

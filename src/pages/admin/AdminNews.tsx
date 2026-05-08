@@ -30,6 +30,7 @@ export default function AdminNews() {
   const [editId, setEditId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -168,9 +169,10 @@ export default function AdminNews() {
       return;
     }
     setBusy(true);
+    setUploadProgress(0);
     try {
       console.log("[AdminNews] uploadNewsMedia call", { name: f.name, type: f.type, size: f.size });
-      const uploaded = await uploadNewsMedia(f);
+      const uploaded = await uploadNewsMedia(f, (p) => setUploadProgress(p));
       setImageUrl(uploaded.url);
       setMediaType(uploaded.mediaType);
       console.log("[AdminNews] uploadNewsMedia success", uploaded);
@@ -183,6 +185,7 @@ export default function AdminNews() {
       toast({ title: "Rasm yuklanmadi, lekin yangilikni rasmsiz saqlashingiz mumkin", variant: "destructive" });
     } finally {
       setBusy(false);
+      setUploadProgress(0);
       e.target.value = "";
     }
   };
@@ -206,6 +209,14 @@ export default function AdminNews() {
             <Label>Yoki fayl yuklash (rasm/video)</Label>
             <Input type="file" accept="image/*,video/*" disabled={busy} onChange={(e) => void onFile(e)} />
           </div>
+          {busy && uploadProgress > 0 ? (
+            <div className="space-y-1">
+              <p className="text-xs text-slate-500">Yuklanmoqda: {uploadProgress}%</p>
+              <div className="h-2 w-full rounded bg-slate-200">
+                <div className="h-2 rounded bg-[#0B4397] transition-all" style={{ width: `${uploadProgress}%` }} />
+              </div>
+            </div>
+          ) : null}
           <p className="text-xs text-slate-500">Rasm ixtiyoriy: faqat sarlavha va matn bilan ham saqlanadi.</p>
           {imageUrl ? (
             mediaType === "video" || looksLikeVideo(imageUrl) ? (

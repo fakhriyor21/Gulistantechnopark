@@ -58,9 +58,6 @@ export default function Footer() {
                 <p className="mb-4">
                   <Link to="/projects">Loyihalar</Link>
                 </p>
-                <p className="mb-4">
-                  <Link to="/gallery">Galereya</Link>
-                </p>
                 <p>
                   <Link to="/contact">Kontaktlar</Link>
                 </p>

@@ -10,7 +10,7 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getDownloadURL, ref, uploadBytes, uploadBytesResumable } from "firebase/storage";
 import { db, isFirebaseConfigured, storage } from "@/firebase/config";
 import type { AboutCms, ContactMessage, GalleryImage, NewsArticle, ServiceItem } from "@/types/cms";
 
@@ -257,12 +257,46 @@ export function watchGallery(
   );
 }
 
-export async function uploadNewsMedia(file: File): Promise<{ url: string; mediaType: "image" | "video" }> {
+export async function uploadNewsMedia(
+  file: File,
+  onProgress?: (percent: number) => void,
+): Promise<{ url: string; mediaType: "image" | "video" }> {
+  if (!canUseFirebase()) {
+    throw new Error("Firebase sozlanmagan");
+  }
+
   const mediaType = file.type.startsWith("video/") ? "video" : "image";
   const path = `news/${Date.now()}_${file.name.replace(/[^\w.-]/g, "_")}`;
   const sref = ref(storage(), path);
-  await uploadBytes(sref, file);
-  return { url: await getDownloadURL(sref), mediaType };
+
+  return new Promise((resolve, reject) => {
+    const task = uploadBytesResumable(sref, file);
+    task.on(
+      "state_changed",
+      (snapshot) => {
+        const pct = snapshot.totalBytes > 0 ? Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100) : 0;
+        onProgress?.(pct);
+      },
+      (err) => {
+        const e = err as { code?: string; message?: string };
+        console.error("[uploadNewsMedia] Storage upload error", {
+          code: e.code,
+          message: e.message,
+          path,
+        });
+        reject(err);
+      },
+      async () => {
+        try {
+          const url = await getDownloadURL(task.snapshot.ref);
+          onProgress?.(100);
+          resolve({ url, mediaType });
+        } catch (err) {
+          reject(err);
+        }
+      },
+    );
+  });
 }
 
 export async function uploadGalleryFile(file: File, caption: string): Promise<string> {

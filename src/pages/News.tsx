@@ -153,12 +153,15 @@ export default function News() {
                     <span className="uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
                       Texnopark yangiliklari
                     </span>
-                    {!item.demo ? (
-                      <span className="font-semibold text-sky-600 transition group-hover:text-sky-800 dark:text-sky-400 dark:group-hover:text-sky-300">
-                        Batafsil →
-                      </span>
-                    ) : null}
                   </div>
+                  {!item.demo ? (
+                    <Link
+                      to={`/news/${item.id}`}
+                      className="inline-flex w-fit items-center justify-center rounded-lg bg-[#0B4397] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#09367a] dark:bg-[#1f4f9b] dark:hover:bg-[#2b63bc]"
+                    >
+                      Batafsil o‘qish
+                    </Link>
+                  ) : null}
                 </div>
               </>
             );
@@ -169,9 +172,9 @@ export default function News() {
                 {cardInner}
               </div>
             ) : (
-              <Link key={String(item.id)} className={`${cardShellClass} group`} to={`/news/${item.id}`}>
+              <div key={String(item.id)} className={`${cardShellClass} group`}>
                 {cardInner}
-              </Link>
+              </div>
             );
           })}
         </div>

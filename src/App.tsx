@@ -109,7 +109,7 @@ function App() {
   const SiteLayout = () => (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <div className="flex-grow">
+      <div className="flex-grow pt-[84px]">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />

@@ -54,6 +54,7 @@ export default function Contact() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
 
   // Input o'zgarishini boshqarish
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -106,6 +107,8 @@ export default function Contact() {
 
       // Muvaffaqiyatli yuborildi
       setSubmitStatus({ type: 'success', message: "So'rovingiz muvaffaqiyatli yuborildi! Administrator tez orada siz bilan bog'lanadi." });
+      setShowSuccessOverlay(true);
+      setTimeout(() => setShowSuccessOverlay(false), 3000);
       
       // Formani tozalash
       setFormData({
@@ -136,6 +139,25 @@ export default function Contact() {
         "dark:text-[#e8edf5] dark:[background-image:radial-gradient(ellipse_110%_75%_at_50%_-15%,#142136_0%,transparent_58%),linear-gradient(180deg,#0a0f1f_0%,#03050b_100%)]",
       )}
     >
+      {showSuccessOverlay ? (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#031227]/55 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-xl rounded-2xl border border-emerald-300 bg-white p-8 text-center shadow-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">Success</p>
+            <h2 className="mt-2 text-3xl font-extrabold text-[#0f2a4f] sm:text-4xl">Admin panelga yuborildi</h2>
+            <p className="mt-3 text-base text-slate-600">
+              So'rovingiz muvaffaqiyatli jo'natildi. Administrator tez orada siz bilan bog'lanadi.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowSuccessOverlay(false)}
+              className="mt-6 inline-flex rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
+            >
+              Yopish
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {/* ... background elementlar o'zgarishsiz ... */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden [transform-style:preserve-3d]" aria-hidden>
         <div className="industry-3d-grid opacity-70 dark:opacity-60" />
