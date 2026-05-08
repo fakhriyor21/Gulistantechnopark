@@ -147,7 +147,7 @@ export default function Industries() {
         </div>
 
         <section className="relative overflow-hidden rounded-2xl border border-[#d9e7f5] bg-[#083f8f] text-white shadow-xl">
-          <img src={data.icon} alt={data.badgeTitle} className="absolute inset-0 h-full w-full object-cover opacity-35" />
+          <img src={data.icon} alt={data.title} className="absolute inset-0 h-full w-full object-cover opacity-35" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0a2f66]/90 to-[#203b6f]/65" />
           <div className="relative z-[2] grid gap-4 p-6 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
