@@ -2,7 +2,8 @@ import { useRef, type MouseEvent, type ReactNode, useState } from "react";
 import logo from "../assets/images/logo/logo-crup.png";
 import { PageContent, PageHero } from "../components/Layout/PageLayout";
 import { cn } from "../lib/utils";
-import { submitContactMessage, canUseFirebase } from "@/services/firebaseCms";
+import { djangoSubmitInquiry, phoneDigitsForDjango } from "@/services/djangoCms";
+import { useMessages } from "@/contexts/LanguageContext";
 
 const MAX_TILT = 7;
 
@@ -43,6 +44,7 @@ function ContactTiltCard({ className, children, ...props }: ContactTiltCardProps
 }
 
 export default function Contact() {
+  const m = useMessages();
   // Form state'larini qo'shamiz
   const [formData, setFormData] = useState({
     last_name: "",
@@ -73,13 +75,13 @@ export default function Contact() {
     
     // Validatsiya
     if (!formData.agreement) {
-      setSubmitStatus({ type: 'error', message: "Iltimos, ma'lumotlarni qayta ishlashga rozilik bering!" });
+      setSubmitStatus({ type: 'error', message: m.contact.agreementErr });
       setTimeout(() => setSubmitStatus(null), 3000);
       return;
     }
 
     if (!formData.first_name || !formData.last_name || !formData.phone) {
-      setSubmitStatus({ type: 'error', message: "Iltimos, barcha majburiy maydonlarni to'ldiring!" });
+      setSubmitStatus({ type: 'error', message: m.contact.requiredErr });
       setTimeout(() => setSubmitStatus(null), 3000);
       return;
     }
@@ -88,25 +90,25 @@ export default function Contact() {
     setSubmitStatus(null);
 
     try {
-      if (!canUseFirebase()) {
+      const phone = phoneDigitsForDjango(formData.phone);
+      if (phone.length !== 9) {
         setSubmitStatus({
           type: "error",
-          message: "Firebase sozlanmagan. Iltimos, administrator bilan bog‘laning.",
+          message: m.contact.phoneErr,
         });
         setTimeout(() => setSubmitStatus(null), 5000);
         setIsSubmitting(false);
         return;
       }
-      await submitContactMessage({
-        firstName: formData.first_name.trim(),
-        lastName: formData.last_name.trim(),
-        phone: formData.phone.trim(),
-        company: formData.company_name.trim() || "",
-        message: formData.message.trim() || "",
+      await djangoSubmitInquiry({
+        name: `${formData.first_name} ${formData.last_name}`.trim(),
+        phone,
+        company_name: (formData.company_name.trim() || m.industries.companyNone).slice(0, 100),
+        body_small: (formData.message.trim() || "—").slice(0, 200),
       });
 
       // Muvaffaqiyatli yuborildi
-      setSubmitStatus({ type: 'success', message: "So'rovingiz muvaffaqiyatli yuborildi! Administrator tez orada siz bilan bog'lanadi." });
+      setSubmitStatus({ type: 'success', message: m.contact.sent });
       setShowSuccessOverlay(true);
       setTimeout(() => setShowSuccessOverlay(false), 3000);
       
@@ -124,7 +126,7 @@ export default function Contact() {
       setTimeout(() => setSubmitStatus(null), 5000);
     } catch (error) {
       console.error("Xatolik:", error);
-      setSubmitStatus({ type: 'error', message: "Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring!" });
+      setSubmitStatus({ type: 'error', message: m.contact.error });
       setTimeout(() => setSubmitStatus(null), 3000);
     } finally {
       setIsSubmitting(false);
@@ -142,17 +144,15 @@ export default function Contact() {
       {showSuccessOverlay ? (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#031227]/55 px-4 backdrop-blur-sm">
           <div className="w-full max-w-xl rounded-2xl border border-emerald-300 bg-white p-8 text-center shadow-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">Success</p>
-            <h2 className="mt-2 text-3xl font-extrabold text-[#0f2a4f] sm:text-4xl">Admin panelga yuborildi</h2>
-            <p className="mt-3 text-base text-slate-600">
-              So'rovingiz muvaffaqiyatli jo'natildi. Administrator tez orada siz bilan bog'lanadi.
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">{m.contact.successOverlay}</p>
+            <h2 className="mt-2 text-3xl font-extrabold text-[#0f2a4f] sm:text-4xl">{m.contact.successHeading}</h2>
+            <p className="mt-3 text-base text-slate-600">{m.contact.successBody}</p>
             <button
               type="button"
               onClick={() => setShowSuccessOverlay(false)}
               className="mt-6 inline-flex rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
             >
-              Yopish
+              {m.contact.close}
             </button>
           </div>
         </div>
@@ -172,9 +172,9 @@ export default function Contact() {
       </div>
       
       <PageHero
-        eyebrow="Aloqa"
-        title="Kontaktlar"
-        subtitle="Telefon, e-mail va manzil — savollar bo‘lsa, murojaat qiling."
+        eyebrow={m.contact.pageEyebrow}
+        title={m.contact.pageTitle}
+        subtitle={m.contact.pageSubtitle}
       />
       <div style={{ perspective: "1200px" }}>
         <PageContent className="relative z-[1] overflow-x-hidden pb-16 pt-4">
@@ -189,14 +189,13 @@ export default function Contact() {
           <div className="my-5 xl:my-[3.75rem]">
             <ContactTiltCard className="relative items-start gap-4 overflow-hidden p-5 sm:p-12">
               <div className="flex flex-col gap-2 [transform:translateZ(18px)]">
-                <div className="text-[#EF7F1A]">Ariza formasi</div>
+                <div className="text-[#EF7F1A]">{m.contact.formEyebrow}</div>
                 <div className="h-px w-full bg-secondary-line-gradient transition-colors" />
               </div>
               
               <div className="flex w-full flex-col justify-between gap-4 [transform:translateZ(20px)] lg:flex-row">
                 <h1 className="text-xl font-bold text-[#33445F] dark:text-white lg:text-[1.75rem] [transform:translateZ(26px)]">
-                  Savollaringiz bormi? So'rov qoldiring va administratorimiz
-                  tez orada siz bilan bog'lanadi!
+                  {m.contact.formHeading}
                 </h1>
                 
                 {/* FORM - O'ZGARTIRILGAN QISM */}
@@ -217,7 +216,7 @@ export default function Contact() {
                       <span className="flex items-center">
                         <input
                           className="flex w-full rounded-md dark:bg-[#081426] border border-solid border-[#E7ECF5] dark:border-[#16283E] dark:placeholder:text-[#84888D] placeholder:text-sm bg-transparent px-4 py-[0.813rem] text-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 relative"
-                          placeholder="Familiya *"
+                          placeholder={`${m.contact.lastNamePh} *`}
                           name="last_name"
                           value={formData.last_name}
                           onChange={handleChange}
@@ -229,7 +228,7 @@ export default function Contact() {
                       <span className="flex items-center">
                         <input
                           className="flex w-full rounded-md dark:bg-[#081426] border border-solid border-[#E7ECF5] dark:border-[#16283E] dark:placeholder:text-[#84888D] placeholder:text-sm bg-transparent px-4 py-[0.813rem] text-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 relative"
-                          placeholder="Ism *"
+                          placeholder={`${m.contact.firstNamePh} *`}
                           name="first_name"
                           value={formData.first_name}
                           onChange={handleChange}
@@ -244,7 +243,7 @@ export default function Contact() {
                       <span className="flex items-center">
                         <input
                           className="flex w-full rounded-md dark:bg-[#081426] border border-solid border-[#E7ECF5] dark:border-[#16283E] dark:placeholder:text-[#84888D] placeholder:text-sm bg-transparent px-4 py-[0.813rem] text-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 relative"
-                          placeholder="Telefon raqam *"
+                          placeholder={`${m.contact.phonePh} *`}
                           name="phone"
                           value={formData.phone}
                           onChange={handleChange}
@@ -256,7 +255,7 @@ export default function Contact() {
                       <span className="flex items-center">
                         <input
                           className="flex w-full rounded-md dark:bg-[#081426] border border-solid border-[#E7ECF5] dark:border-[#16283E] dark:placeholder:text-[#84888D] placeholder:text-sm bg-transparent px-4 py-[0.813rem] text-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 relative"
-                          placeholder="Kompaniya/Tashkilot nomi"
+                          placeholder={m.contact.companyPh}
                           name="company_name"
                           value={formData.company_name}
                           onChange={handleChange}
@@ -266,7 +265,7 @@ export default function Contact() {
                     <div className="space-y-2 w-full">
                       <textarea
                         className="flex w-full h-[7.875rem] rounded-md dark:bg-[#081426] border border-solid border-[#E7ECF5] dark:border-[#16283E] dark:placeholder:text-[#84888D] placeholder:text-sm bg-transparent px-4 py-[0.813rem] text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder="Savolingizning qisqacha tavsifi"
+                        placeholder={m.contact.messagePh}
                         name="message"
                         value={formData.message}
                         onChange={handleChange}
@@ -301,7 +300,7 @@ export default function Contact() {
                         height: 16,
                       }}
                     />
-                    <span>Men ma'lumotlarni qayta ishlashga roziman *</span>
+                    <span>{m.contact.formAgree} *</span>
                   </label>
                   
                   <button
@@ -309,7 +308,7 @@ export default function Contact() {
                     type="submit"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Yuborilmoqda..." : "Ma'lumotlarni yuborish"}
+                    {isSubmitting ? m.common.submitting : m.contact.submit}
                   </button>
                 </form>
               </div>

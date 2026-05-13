@@ -1,14 +1,14 @@
-interface section {
+export interface section {
   title: string;
   description: string;
 }
 
-interface sectionData {
+export interface sectionData {
   title: string;
   description: string;
   data: section[];
 }
-interface ServiceData {
+export interface ServiceData {
   name: string;
   description: string;
   icon: string;

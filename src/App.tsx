@@ -17,6 +17,7 @@ import { Toaster } from "./components/ui/toaster";
 import NewsInfo from "./pages/NewsInfo";
 import Innox from "./pages/Innox";
 import Gallery from "./pages/Gallery";
+import { useLanguage } from "./contexts/LanguageContext";
 
 function isLikelySlowNetwork(): boolean {
   const nav = navigator as Navigator & {
@@ -106,29 +107,32 @@ function PageTransitionLoader() {
 }
 
 function App() {
-  const SiteLayout = () => (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <div className="flex-grow pt-[84px]">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/news" element={<News />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/gallery" element={<Gallery />} />
-          <Route path="/innox" element={<Innox />} />
-          <Route path="/services/industries/:id" element={<Industries />} />
-          <Route path="/projects/:id" element={<ProjectInfo />} />
-          <Route path="/news/:id" element={<NewsInfo />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+  const SiteLayout = () => {
+    const { language } = useLanguage();
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-grow pt-[84px]">
+          <Routes key={language}>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/projects" element={<Projects />} />
+            <Route path="/news" element={<News />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/innox" element={<Innox />} />
+            <Route path="/services/industries/:id" element={<Industries />} />
+            <Route path="/projects/:id" element={<ProjectInfo />} />
+            <Route path="/news/:id" element={<NewsInfo />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </div>
+        <MobileMenu />
+        <Footer />
       </div>
-      <MobileMenu />
-      <Footer />
-    </div>
-  );
+    );
+  };
 
   return (
     <>

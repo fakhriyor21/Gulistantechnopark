@@ -8,34 +8,8 @@ import { Search } from "../Search/Search";
 import { useTheme } from "../provider/theme-provider";
 import { Link } from "react-router-dom";
 import { BsStars } from "react-icons/bs";
-
-const serviceMenuItems = [
-  {
-    title: "Startaplar",
-    description: "Inkubatsiya, mentorlik va investor aloqalari",
-    to: "/services",
-  },
-  {
-    title: "FABLAB",
-    description: "Prototiplash va zamonaviy ishlab chiqarish uskunalari",
-    to: "/services",
-  },
-  {
-    title: "Qishloq xo'jaligi",
-    description: "Agrotexnologiyalar va avtomatlashtirish yechimlari",
-    to: "/services",
-  },
-  {
-    title: "Xalqaro aloqalar",
-    description: "Hamkorlik, grantlar va bozorga chiqish imkoniyatlari",
-    to: "/services",
-  },
-  {
-    title: "Dasturiy ta'minot",
-    description: "Veb, mobil va integratsion platformalar",
-    to: "/services",
-  },
-];
+import LanguageSwitcher from "../LanguageSwitcher";
+import { useMessages } from "@/contexts/LanguageContext";
 
 const navItemClass =
   "relative block rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200 after:absolute after:bottom-0 after:left-4 after:h-0.5 after:w-0 after:rounded-full after:bg-current after:transition-all after:duration-200 hover:after:w-[calc(100%-2rem)]";
@@ -44,6 +18,9 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const { theme } = useTheme();
   const logoPath = theme === "dark" ? logowhite : logo;
+  const m = useMessages();
+  const serviceMenuItems = m.nav.serviceCards;
+
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 50) {
@@ -61,9 +38,7 @@ export default function Navbar() {
   }, []);
 
   const innoid = () => {
-    alert(
-      "Innoid bo'limi ishlab chiqish jarayonida tez orada ishga tushiriladi!"
-    );
+    alert(m.nav.innoAlert);
   };
   return (
     <nav
@@ -76,17 +51,9 @@ export default function Navbar() {
       <div className="max-w-screen-2xl flex flex-wrap items-center justify-between mx-auto p-4">
         <div className="flex items-center space-x-3 rtl:space-x-reverse">
           {isScrolled ? (
-            <img
-              src={logoPath}
-              className="h-14 max-lg:h-8"
-              alt="Technopark Logo"
-            />
+            <img src={logoPath} className="h-14 max-lg:h-8" alt={m.nav.logoAlt} />
           ) : (
-            <img
-              src={logowhite}
-              className="h-14 max-lg:h-8"
-              alt="Technopark Logo"
-            />
+            <img src={logowhite} className="h-14 max-lg:h-8" alt={m.nav.logoAlt} />
           )}
         </div>
         <div className="flex md:order-2 space-x-3 max-lg:space-x-0 md:space-x-0 rtl:space-x-reverse gap-3">
@@ -94,16 +61,11 @@ export default function Navbar() {
             <Search />
           </div>
 
+          <LanguageSwitcher variant={isScrolled ? "navbarOnLight" : "navbarOnBlue"} />
           <DarkMode />
-          <Button
-            type="button"
-            className=" "
-            variant={"outline"}
-            onClick={innoid}
-          >
-            <IoLogIn className="text-lg " /> INNO ID
+          <Button type="button" className=" " variant={"outline"} onClick={innoid}>
+            <IoLogIn className="text-lg " /> {m.nav.innoId}
           </Button>
-          <div id="google_translate_element "></div>
         </div>
         <div
           className="items-center justify-between hidden w-full md:flex md:w-auto md:order-1"
@@ -123,7 +85,7 @@ export default function Navbar() {
                   className={`${navItemClass} dark:text-white ${isScrolled ? "text-blue-900 hover:text-white" : "text-white"}`}
                   aria-current="page"
                 >
-                  Bosh sahifa
+                  {m.nav.home}
                 </Link>
               </li>
               <li className="rounded-xl p-1 transition-colors hover:bg-[#0b4397]/90 hover:text-white">
@@ -131,7 +93,7 @@ export default function Navbar() {
                   to="/about"
                   className={`${navItemClass} dark:text-white ${isScrolled ? "text-blue-900 hover:text-white" : "text-white"}`}
                 >
-                  Biz haqimizda
+                  {m.nav.about}
                 </Link>
               </li>
               <li className="group relative rounded-xl p-1 transition-colors hover:bg-[#0b4397]/90 hover:text-white">
@@ -140,38 +102,34 @@ export default function Navbar() {
                   className={`${navItemClass} flex items-center gap-2 dark:text-white ${isScrolled ? "text-blue-900 group-hover:text-white" : "text-white"}`}
                 >
                   <BsStars className="text-sm opacity-90" />
-                  Xizmatlar
+                  {m.nav.services}
                 </Link>
                 <div className="pointer-events-none absolute left-1/2 top-full z-30 mt-4 w-[680px] -translate-x-1/2 rounded-3xl border border-blue-100/80 bg-white/95 p-5 opacity-0 shadow-[0_35px_70px_-20px_rgba(24,57,106,0.45)] backdrop-blur-xl transition-all duration-300 group-hover:pointer-events-auto group-hover:opacity-100 dark:border-white/15 dark:bg-[#0f1d33]/95">
                   <div className="grid grid-cols-[260px_1fr] gap-4">
                     <div className="rounded-2xl bg-[linear-gradient(145deg,#0a3f8a,#115fc4)] p-4 text-white shadow-inner">
-                      <p className="text-xs uppercase tracking-[0.16em] text-sky-100/80">
-                        Techno Spotlight
-                      </p>
-                      <p className="mt-2 text-lg font-semibold leading-snug">
-                        Innovatsion xizmatlar bilan loyihangizni keyingi bosqichga olib chiqing.
-                      </p>
+                      <p className="text-xs uppercase tracking-[0.16em] text-sky-100/80">{m.nav.ddSpotlight}</p>
+                      <p className="mt-2 text-lg font-semibold leading-snug">{m.nav.ddSpotlightBody}</p>
                       <Link
                         to="/services"
                         className="mt-4 inline-flex rounded-lg bg-white/15 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-white/25"
                       >
-                        Xizmatlar sahifasi
+                        {m.nav.ddServicesPage}
                       </Link>
                     </div>
                     <div>
                       <div className="mb-3 flex items-center justify-between border-b border-blue-100 pb-3 dark:border-white/10">
-                        <p className="text-sm font-semibold text-[#0a3f8a] dark:text-sky-300">Xizmat yo'nalishlari</p>
+                        <p className="text-sm font-semibold text-[#0a3f8a] dark:text-sky-300">{m.nav.ddPathsTitle}</p>
                         <Link
                           to="/services"
                           className="text-xs font-medium text-[#0a3f8a] hover:underline dark:text-sky-300"
                         >
-                          Barchasini ko'rish
+                          {m.nav.ddViewAll}
                         </Link>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         {serviceMenuItems.map((item) => (
                           <Link
-                            key={item.to}
+                            key={`${item.title}-${item.to}`}
                             to={item.to}
                             className="rounded-xl border border-transparent px-3 py-3 transition-colors hover:border-[#0a3f8a]/20 hover:bg-[#0a3f8a]/5 dark:hover:border-sky-400/30 dark:hover:bg-sky-400/10"
                           >
@@ -191,27 +149,19 @@ export default function Navbar() {
                   to="/innox"
                   className={`${navItemClass} dark:text-white ${isScrolled ? "text-blue-900 hover:text-white" : "text-white"}`}
                 >
-                  INNOX
+                  {m.nav.innox}
                   <div className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 text-red-600 text-xs font-bold tracking-wide m-1 ">
-                    New
+                    {m.nav.newBadge}
                   </div>
                 </Link>
               </li>
 
-              {/* <li className="hover:bg-blue-900 hover:text-white p-2 rounded-lg hover:bg-opacity-90">
-                <Link
-                  to="/projects"
-                  className={`block py-2 px-3 rounded md:bg-transparent md:p-0 dark:text-white ${isScrolled ? "text-blue-800 hover:text-white" : "text-white"} `}
-                >
-                  Loyihalar
-                </Link>
-              </li> */}
               <li className="rounded-xl p-1 transition-colors hover:bg-[#0b4397]/90 hover:text-white">
                 <Link
                   to="/news"
                   className={`${navItemClass} dark:text-white ${isScrolled ? "text-blue-900 hover:text-white" : "text-white"}`}
                 >
-                  Yangiliklar
+                  {m.nav.news}
                 </Link>
               </li>
               <li className="rounded-xl p-1 transition-colors hover:bg-[#0b4397]/90 hover:text-white">
@@ -219,7 +169,7 @@ export default function Navbar() {
                   to="/contact"
                   className={`${navItemClass} dark:text-white ${isScrolled ? "text-blue-900 hover:text-white" : "text-white"}`}
                 >
-                  Kontaktlar
+                  {m.nav.contact}
                 </Link>
               </li>
             </ul>

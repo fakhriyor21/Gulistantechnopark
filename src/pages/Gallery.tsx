@@ -1,41 +1,53 @@
 import { useEffect, useState } from "react";
 import { LiaSpinnerSolid } from "react-icons/lia";
 import { PageContent, PageHero } from "@/components/Layout/PageLayout";
-import { canUseFirebase, watchGallery } from "@/services/firebaseCms";
+import { djangoListAboutUsImages } from "@/services/djangoCms";
+import { mediaFileUrl } from "@/lib/apiOrigin";
 import type { GalleryImage } from "@/types/cms";
+import { useLanguage, useMessages } from "@/contexts/LanguageContext";
 
 export default function Gallery() {
+  const { language } = useLanguage();
+  const m = useMessages();
   const [photos, setPhotos] = useState<{ id: string; data: GalleryImage }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!canUseFirebase()) {
-      setPhotos([]);
-      setLoading(false);
-      return;
-    }
-    const unsub = watchGallery(
-      (rows) => {
-        setPhotos(rows as { id: string; data: GalleryImage }[]);
-        setLoading(false);
-      },
-      () => setLoading(false),
-    );
-    return unsub;
-  }, []);
+    let cancelled = false;
+    setLoading(true);
+    void djangoListAboutUsImages()
+      .then((rows) => {
+        if (cancelled) return;
+        setPhotos(
+          rows
+            .filter((r): r is typeof r & { img: string } => Boolean(r.img))
+            .map((r) => ({
+              id: String(r.id),
+              data: {
+                imageUrl: r.img.startsWith("http") ? r.img : mediaFileUrl(r.img),
+                caption: "",
+              },
+            })),
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [language]);
 
   return (
     <div className="min-h-screen dark:bg-[#08101B]">
-      <PageHero eyebrow="Galereya" title="Foto lavhalar" subtitle="Texnopark hayotidan kadrlar." />
+      <PageHero eyebrow={m.gallery.eyebrow} title={m.gallery.title} subtitle={m.gallery.subtitle} />
       <PageContent className="pb-16 pt-6">
         {loading ? (
           <div className="flex justify-center py-20">
             <LiaSpinnerSolid className="size-12 animate-spin text-[#0B4397] dark:text-white" />
           </div>
         ) : photos.length === 0 ? (
-          <p className="text-center text-slate-600 dark:text-slate-400">
-            Hozircha rasmlar yo‘q. Admin galereyadan qo‘shishingiz mumkin.
-          </p>
+          <p className="text-center text-slate-600 dark:text-slate-400">{m.gallery.empty}</p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {photos.map(({ id, data }) => (

@@ -1,5 +1,4 @@
-import type { Timestamp } from "firebase/firestore";
-
+/** Django CMS bilan mos UI tiplari */
 export type ContactMessage = {
   firstName: string;
   lastName: string;
@@ -7,7 +6,7 @@ export type ContactMessage = {
   company: string;
   message: string;
   read: boolean;
-  createdAt: Timestamp;
+  createdAt?: string;
 };
 
 export type NewsArticle = {
@@ -16,8 +15,8 @@ export type NewsArticle = {
   imageUrl: string;
   mediaType?: "image" | "video";
   active?: boolean;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type ServiceItem = {
@@ -26,14 +25,14 @@ export type ServiceItem = {
   linkPath: string;
   iconId: string;
   order: number;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type GalleryImage = {
   imageUrl: string;
   caption: string;
-  createdAt: Timestamp;
+  createdAt?: string;
 };
 
 export type AboutCms = {
@@ -42,5 +41,5 @@ export type AboutCms = {
   title: string;
   subtitle: string;
   bodyHtml: string;
-  updatedAt?: Timestamp;
+  updatedAt?: string;
 };

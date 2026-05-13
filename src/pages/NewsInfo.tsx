@@ -4,11 +4,12 @@ import { LiaSpinnerSolid } from "react-icons/lia";
 import { mediaFileUrl } from "../lib/apiOrigin";
 import newsPlaceholder from "../assets/images/home/itcourse.jpg";
 import { formatNewsDate } from "../lib/utils";
-import { canUseFirebase, watchNews } from "@/services/firebaseCms";
-import { SAMPLE_NEWS } from "@/data/sampleNews";
-import { timestampToIsoString } from "@/lib/firestoreDates";
+import { djangoGetNews, djangoListNews } from "@/services/djangoCms";
+import { useLanguage, useMessages } from "@/contexts/LanguageContext";
 
 export default function NewsInfo() {
+  const { language } = useLanguage();
+  const m = useMessages();
   const resolveMediaSrc = (value: string) => {
     if (value.startsWith("http") || value.startsWith("data:")) return value;
     return mediaFileUrl(value);
@@ -32,59 +33,76 @@ export default function NewsInfo() {
   });
   const [loading, setLoading] = useState(true);
   const [related, setRelated] = useState<NewsShape[]>([]);
+  const [notFound, setNotFound] = useState(false);
   const id = useParams().id;
 
   useEffect(() => {
     if (!id) return;
-    if (!canUseFirebase()) {
-      const sample = SAMPLE_NEWS.find((item) => String(item.id) === id);
-      if (sample) {
-        setNews({
-          id: String(sample.id),
-          title: sample.title,
-          description: sample.description,
-          datatime: sample.datatime,
-          file: sample.file ?? [],
-        });
-        setRelated(
-          SAMPLE_NEWS.filter((n) => String(n.id) !== id).slice(0, 3).map((n) => ({
-            id: String(n.id),
-            title: n.title,
-            description: n.description,
-            datatime: n.datatime,
-            file: n.file ?? [],
-          })),
-        );
+    let cancelled = false;
+    setLoading(true);
+
+    void (async () => {
+      try {
+        const nid = Number(id);
+        const row = Number.isFinite(nid) ? await djangoGetNews(nid) : null;
+        const list = await djangoListNews();
+        if (cancelled) return;
+        if (row) {
+          setNotFound(false);
+          const img = row.img ?? "";
+          setNews({
+            id: String(row.id),
+            title: row.title,
+            description: row.body_small ?? "",
+            datatime: row.created_at,
+            file: img ? [img] : [],
+            mediaType: /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(img) ? "video" : "image",
+          });
+          setRelated(
+            list
+              .filter((r) => String(r.id) !== id)
+              .slice(0, 3)
+              .map((r) => ({
+                id: String(r.id),
+                title: r.title,
+                description: r.body_small ?? "",
+                datatime: r.created_at,
+                file: r.img ? [r.img] : [],
+              })),
+          );
+        } else {
+          setNotFound(true);
+          setNews({ id: "", title: "", description: "", datatime: "", file: [], mediaType: "image" });
+          setRelated([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      setLoading(false);
-      return;
-    }
-    const unsub = watchNews(
-      (rows) => {
-        const all = rows
-          .filter((r) => r.data.active !== false)
-          .map(({ id: rowId, data }) => ({
-            id: rowId,
-            title: data.title,
-            description: data.description,
-            datatime: timestampToIsoString(data.createdAt) || "",
-            file: data.imageUrl ? [data.imageUrl] : [],
-            mediaType: data.mediaType as "video" | "image" | undefined,
-          }));
-        const current = all.find((item) => item.id === id);
-        if (current) setNews(current);
-        setRelated(all.filter((item) => item.id !== id).slice(0, 3));
-        setLoading(false);
-      },
-      () => setLoading(false),
-    );
-    return unsub;
-  }, [id]);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, language]);
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <LiaSpinnerSolid className="animate-spin-slow text-blue-500 dark:text-white text-4xl" />
+      <div className="flex h-screen items-center justify-center">
+        <LiaSpinnerSolid className="animate-spin-slow text-4xl text-blue-500 dark:text-white" />
+      </div>
+    );
+  }
+
+  if (notFound || !news.title) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 pt-28 pb-16">
+        <p className="text-lg font-semibold text-[#33445F] dark:text-white">{m.news.notFoundTitle}</p>
+        <Link
+          to="/news"
+          className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-[#0B4397] hover:bg-slate-50 dark:border-[#22334f] dark:text-sky-300 dark:hover:bg-[#102038]"
+        >
+          {m.news.notFoundBack}
+        </Link>
       </div>
     );
   }
@@ -97,20 +115,16 @@ export default function NewsInfo() {
             to="/news"
             className="w-fit rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-[#0B4397] hover:bg-slate-50 dark:border-[#22334f] dark:text-sky-300 dark:hover:bg-[#102038]"
           >
-            ← Orqaga
+            {m.news.back}
           </Link>
-          <h1 className="mt-[2.125rem] text-2xl font-bold text-[#33445F] dark:text-white xl:text-[2.25rem]">
-            {news.title}
-          </h1>
+          <h1 className="mt-[2.125rem] text-2xl font-bold text-[#33445F] dark:text-white xl:text-[2.25rem]">{news.title}</h1>
 
           <div className="flex flex-col gap-3">
             <div className="flex w-full items-center justify-between gap-3 pt-4">
-              <p className="font-semibold text-[#8F98A7] dark:text-white lg:text-lg">
-                {formatNewsDate(news.datatime)}
-              </p>
+              <p className="font-semibold text-[#8F98A7] dark:text-white lg:text-lg">{formatNewsDate(news.datatime)}</p>
             </div>
             {news.file?.length ? (
-              news.file.map((item, index) => (
+              news.file.map((item, index) =>
                 news.mediaType === "video" || /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(item) ? (
                   <video
                     key={index}
@@ -129,8 +143,8 @@ export default function NewsInfo() {
                     alt={news.title}
                     key={index}
                   />
-                )
-              ))
+                ),
+              )
             ) : (
               <img
                 src={newsPlaceholder}
@@ -143,13 +157,17 @@ export default function NewsInfo() {
               dangerouslySetInnerHTML={{
                 __html: news.description,
               }}
-            ></div>
+            />
             {related.length > 0 ? (
               <div className="mt-8 rounded-xl border border-slate-200 p-4 dark:border-[#22334f]">
-                <h2 className="mb-3 text-lg font-semibold dark:text-white">O‘xshash yangiliklar</h2>
+                <h2 className="mb-3 text-lg font-semibold dark:text-white">{m.news.related}</h2>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {related.map((item) => (
-                    <Link key={item.id} to={`/news/${item.id}`} className="rounded-lg border p-3 hover:bg-slate-50 dark:border-[#22334f] dark:hover:bg-[#0d1a2b]">
+                    <Link
+                      key={item.id}
+                      to={`/news/${item.id}`}
+                      className="rounded-lg border p-3 hover:bg-slate-50 dark:border-[#22334f] dark:hover:bg-[#0d1a2b]"
+                    >
                       <p className="text-sm font-semibold dark:text-white">{item.title}</p>
                       <p className="mt-1 text-xs text-slate-500">{formatNewsDate(item.datatime)}</p>
                     </Link>

@@ -10,12 +10,14 @@ import {
   DialogDescription,
 } from "../ui/dialog";
 import YouTubePlayerS from "./VideoPLayer";
+import { useMessages } from "@/contexts/LanguageContext";
 
 type OpenVideoProps = {
   triggerClassName?: string;
 };
 
 export default function OpenVideo({ triggerClassName }: OpenVideoProps) {
+  const m = useMessages();
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -27,7 +29,7 @@ export default function OpenVideo({ triggerClassName }: OpenVideoProps) {
             triggerClassName,
           )}
         >
-          <FaPlay className="text-sm" /> Video ko'rish
+          <FaPlay className="text-sm" /> {m.common.watchVideo}
         </Button>
       </DialogTrigger>
       <DialogContent className="w-full max-w-screen-lg flex items-center justify-center bg-opacity-100 bg-black/50 backdrop-blur-sm border-none">

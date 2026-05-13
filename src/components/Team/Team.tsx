@@ -16,6 +16,7 @@ import jasur from "../../assets/images/team/jasur.png";
 import shakhlo from "../../assets/images/team/shakhlo.png";
 import ulugbek from "../../assets/images/team/ulugbeks.jpg";
 import { cn } from "../../lib/utils";
+import { useMessages } from "@/contexts/LanguageContext";
 
 type SocialPlatform = "telegram" | "instagram" | "linkedin" | "youtube" | "facebook" | "github";
 
@@ -25,7 +26,7 @@ type TeamSocialLink = {
   label?: string;
 };
 
-type TeamMemberData = {
+export type TeamMemberData = {
   name: string;
   role: string;
   image: string;
@@ -60,7 +61,7 @@ function getSocialByPlatform(socials: TeamSocialLink[], platform: SocialPlatform
 }
 
 /** Havolalarni keyinroq haqiqiy profillarga almashtiring */
-const teamMembers: TeamMemberData[] = [
+const defaultTeamMembers: TeamMemberData[] = [
   {
     name: "Avaz",
     role: "Direktor",
@@ -166,11 +167,18 @@ const teamMembers: TeamMemberData[] = [
   },
 ];
 
-export default function Team() {
+export type TeamProps = {
+  /** Django yoki boshqa API dan kelgan jamoa; bo'sh bo'lsa ichki ro'yxat */
+  members?: TeamMemberData[] | null;
+};
+
+export default function Team({ members }: TeamProps) {
+  const m = useMessages();
+  const teamMembersList = members != null && members.length > 0 ? members : defaultTeamMembers;
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
 
-  const selected = selectedIndex !== null ? teamMembers[selectedIndex] : null;
+  const selected = selectedIndex !== null ? teamMembersList[selectedIndex] : null;
 
   useEffect(() => {
     setMounted(true);
@@ -216,7 +224,7 @@ export default function Team() {
             type="button"
             onClick={closeDetail}
             className="absolute right-3 top-3 rounded-full p-2.5 text-[#5f708b] transition hover:bg-black/5 hover:text-[#1f3046] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0b4aa2] dark:text-white/60 dark:hover:bg-white/10 dark:hover:text-white dark:focus-visible:ring-[#8ab8ff]"
-            aria-label="Yopish"
+            aria-label={m.common.close}
           >
             <X className="h-5 w-5" strokeWidth={2} />
           </button>
@@ -238,7 +246,7 @@ export default function Team() {
             </h3>
 
             <p className="mt-8 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8a9ab5] dark:text-white/45">
-              Ijtimoiy tarmoqlar
+              {m.team.socials}
             </p>
             <div className="mt-3 flex w-full max-w-xs flex-wrap items-center justify-center gap-4 sm:max-w-none sm:gap-6">
               {FOUR_PLATFORMS.map((platform) => {
@@ -271,7 +279,7 @@ export default function Team() {
                 return (
                   <span
                     key={platform}
-                    title={`${label} — havola qo'shilmagan`}
+                    title={`${label} — ${m.team.noLink}`}
                     className="flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-full border border-dashed border-[#d5deeb] bg-[#f0f4fa]/80 text-[#b8c5d9] dark:border-[#2f4058] dark:bg-[#121c2e] dark:text-white/20"
                     aria-hidden
                   >
@@ -293,12 +301,11 @@ export default function Team() {
 
       <div className="relative mx-auto w-full max-w-[1180px] px-4 sm:px-6 lg:px-10 xl:px-16">
         <h2 className="text-3xl font-black tracking-tight text-[#0b4aa2] dark:text-[#8ab8ff] sm:text-4xl md:text-[2.65rem]">
-          Jamoa
+          {m.team.title}
         </h2>
 
         <p className="mt-5 max-w-3xl text-sm leading-relaxed text-[#4f6180] dark:text-[#c5d7f0] sm:text-base sm:leading-8">
-          Jamoamiz 50 dan ortiq mutaxassislarni birlashtirgan va biz ular bilan faxrlanamiz. Jamoamiz a&apos;zolari
-          katta tajribaga ega o&apos;qituvchilar, dasturchilar, dizaynerlar va marketologlardir.
+          {m.team.body}
         </p>
 
         <div className="relative mt-10 flex justify-center pb-2">
@@ -316,7 +323,7 @@ export default function Team() {
             aria-hidden
           />
           <div className="relative z-[1] flex max-w-full flex-nowrap items-center justify-start gap-2 overflow-x-auto overflow-y-visible py-3 [-ms-overflow-style:none] [scrollbar-width:none] sm:justify-center sm:gap-2.5 [&::-webkit-scrollbar]:hidden">
-            {teamMembers.map((member, index) => {
+            {teamMembersList.map((member, index) => {
               const isActive = selectedIndex === index;
               return (
                 <button

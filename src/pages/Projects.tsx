@@ -3,18 +3,20 @@ import work2 from "../assets/images/projects/work2.png"
 import work3 from "../assets/images/projects/work3.png"
 import work4 from "../assets/images/projects/work4.png"
 import work5 from "../assets/images/projects/work5.png"
+import { useMessages } from "@/contexts/LanguageContext";
+
 export default function Projects() {
+  const m = useMessages();
   return (
     <div className="dark:bg-[#08101B] ">
       <div className=" pt-24 flex flex-1 flex-col overflow-x-hidden">
         <div className="container mx-auto px-5 pt-5 xl:px-16 xl:pt-11">
           <div className="flex flex-col items-center text-left lg:text-center">
             <h1 className="max-w-[612px] text-2xl font-bold text-[#33445F] dark:text-white lg:text-[2.688rem] lg:leading-10">
-              Biz har bir loyihaga alohida mehr beramiz
+              {m.projects.heroTitle}
             </h1>
             <div className=" mt-4 max-w-[923px] text-sm text-[#8F98A7] dark:text-white lg:text-[1.1rem]">
-              Biz jamiyatga innovatsion startup loyihalarni va hayotni yangi imkoniyatlar bilan
-              to‘ldirishga yordam beradigan noyob innovatsion yechimlarni yaratamiz.
+              {m.projects.heroSubtitle}
             </div>
           </div>
 
@@ -23,13 +25,10 @@ export default function Projects() {
               <div className="flex flex-1 flex-col justify-between gap-5">
                 <div className="flex flex-col items-center gap-2 lg:items-start">
                   <h1 className="text-2xl font-bold text-[#33445F] dark:text-white lg:text-[2rem]">
-                    Workflow
+                    {m.projects.workflowTitle}
                   </h1>
                   <p className="text-center text-sm text-[#8F98A7] dark:text-white lg:text-left xl:text-lg ">
-                    Xodimlarning ish vaqtini qayd etish va ularni boshqarish
-                    tizimi Inson resurslarini boshqarishni avtomatlashtirish
-                    hisobiga xodimlarga sarflanadigan xarajatlarni kamaytiradi
-                    va vaqtni tejaydi.
+                    {m.projects.workflowDesc}
                   </p>
                 </div>
                 <div
@@ -37,7 +36,7 @@ export default function Projects() {
                 
                 >
                   <button className="flex justify-center rounded-lg border border-solid border-[#ffffff1a] bg-[#074196] px-6 py-[1.063rem] text-sm font-medium text-white hover:opacity-90 hover:dark:bg-white/5 hover:dark:opacity-100 xl:text-lg">
-                    Batafsil
+                    {m.home.readMore}
                   </button>
                 </div>
               </div>
@@ -83,7 +82,7 @@ export default function Projects() {
                 href="/"
               >
                 <button className="items-center justify-center whitespace-nowrap ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-[#2155A1] flex w-full rounded-lg border border-solid border-[#ffffff1a] bg-[#074196] px-6 py-[1.063rem] text-sm font-medium text-white hover:dark:bg-white/5 xl:text-lg">
-                  Batafsil
+                  {m.home.readMore}
                 </button>
               </a>
             </div>

@@ -7,10 +7,10 @@ import { useTheme } from "../components/provider/theme-provider";
 import NewsPage from "../components/News/NewsPage";
 import Hero from "../components/Hero/Hero";
 import OpenVideo from "../components/OpenVideo/OpenVideo";
-
-
+import { useMessages } from "@/contexts/LanguageContext";
 
 export default function Home() {
+  const m = useMessages();
   const { theme } = useTheme();
   let bgImage =
     "linear-gradient(0deg, rgba(103,144,205,1) 0%, rgba(9,66,150,1) 100%)";
@@ -85,16 +85,11 @@ export default function Home() {
           <div className="h-full w-full grid grid-cols-1 md:grid-cols-2 items-center justify-center gap-10 px-6 max-lg:px-0">
             <div>
               <h1 className="mb-4 text-2xl font-poppins font-bold leading-none tracking-tight max-lg:text-center max-lg:text-3xl md:text-2xl lg:text-6xl text-white">
-                INNOVATSION RIVOJLANISH AGENTLIGI HUZURIDAGI
+                {m.home.heroLine1}
                 <br />
-                <span className="text-blue-200">
-                  GULISTON YOSHLAR TEXNOPARKI
-                </span>
+                <span className="text-blue-200">{m.home.heroLine2}</span>
               </h1>
-              <p className="text-lg font-semibold text-white italic">
-                Guliston Yoshlar Texnoparki — ilg‘or texnologiyalar, yaratgan
-                g‘oyalar va ertangi kunni shakllantiruvchi avlodning markazi!
-              </p>
+              <p className="text-lg font-semibold text-white italic">{m.home.heroSub}</p>
               <hr className="mt-5 mb-5 dark:border-white/20" />
               <div className="flex gap-5">
                 <OpenVideo />
@@ -104,7 +99,7 @@ export default function Home() {
                   className="gap-2 text-blue-500"
                   onClick={scrollToAbout}
                 >
-                  Batafsil
+                  {m.home.readMore}
                 </Button>
               </div>
             </div>

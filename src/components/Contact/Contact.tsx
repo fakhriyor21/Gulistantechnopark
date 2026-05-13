@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useToast } from "../../hooks/use-toast";
 import logo from "../../assets/images/logo/logo-crup.png";
-import { submitContactMessage, canUseFirebase } from "@/services/firebaseCms";
+import { djangoSubmitInquiry, phoneDigitsForDjango } from "@/services/djangoCms";
 
 export default function Contact() {
   const [firstName, setFirstName] = useState("");
@@ -28,19 +28,20 @@ export default function Contact() {
 
     void (async () => {
       try {
-        if (!canUseFirebase()) {
+        const phone9 = phoneDigitsForDjango(phone.trim());
+        if (phone9.length !== 9) {
           toast({
-            title: "Firebase sozlanmagan",
+            title: "Telefon",
+            description: "9 raqamli raqam kiriting (masalan 901234567).",
             variant: "destructive",
           });
           return;
         }
-        await submitContactMessage({
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          phone: phone.trim(),
-          company: company.trim(),
-          message: message.trim(),
+        await djangoSubmitInquiry({
+          name: `${firstName.trim()} ${lastName.trim()}`,
+          phone: phone9,
+          company_name: (company.trim() || "Ko'rsatilmagan").slice(0, 100),
+          body_small: (message.trim() || "—").slice(0, 200),
         });
 
         toast({

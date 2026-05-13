@@ -1,6 +1,19 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { PageContent, PageHero } from "../components/Layout/PageLayout";
-import { canUseFirebase, watchAboutCms } from "@/services/firebaseCms";
+import {
+  djangoGetAboutUs,
+  djangoListAboutCompany,
+  djangoListHistory,
+  djangoListFaqsPublic,
+  djangoGetQuoteLatest,
+  djangoListTeam,
+  stripHtml,
+  type DjangoAboutUs,
+  type DjangoAboutCompany,
+  type DjangoHistoryRow,
+  type DjangoFaqRow,
+  type DjangoQuoteRow,
+} from "@/services/djangoCms";
+import type { TeamMemberData } from "@/components/Team/Team";
 import groupimage from "../assets/images/home/imagegroup.png";
 import director from "../assets/images/hero/director.png";
 import logo from "../assets/images/logo/logo-crup.png";
@@ -19,11 +32,21 @@ import {
   FaLayerGroup,
   FaUsers,
 } from "react-icons/fa";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { aboutPageI18n, localeDateOptions, localeTag } from "@/locales/aboutPageI18n";
 
 /** OpenVideo dialog bilan bir xil YouTube roliki */
 const ABOUT_HERO_VIDEO_ID = "-I8bzlX8_IM";
 
-function AboutHeroMedia({ posterSrc }: { posterSrc: string }) {
+function AboutHeroMedia({
+  posterSrc,
+  posterAlt,
+  videoTitle,
+}: {
+  posterSrc: string;
+  posterAlt: string;
+  videoTitle: string;
+}) {
   const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
@@ -38,13 +61,13 @@ function AboutHeroMedia({ posterSrc }: { posterSrc: string }) {
     <>
       <img
         src={posterSrc}
-        alt={showVideo ? "" : "Texnopark jamoasi"}
+        alt={showVideo ? "" : posterAlt}
         aria-hidden={showVideo}
         className="absolute inset-0 h-full w-full object-cover object-center [transform:translateZ(0)]"
       />
       {showVideo ? (
         <iframe
-          title="Texnopark tanishtiruv videosi"
+          title={videoTitle}
           className="pointer-events-none absolute left-1/2 top-1/2 z-[1] border-0 [transform:translate(-50%,-50%)]"
           style={{
             width: "100vw",
@@ -59,63 +82,6 @@ function AboutHeroMedia({ posterSrc }: { posterSrc: string }) {
     </>
   );
 }
-
-const benefits = [
-  {
-    title: "O'zbek tilidagi darslar",
-    text: "Kurslar o'zbek tilida ham mavjud, barcha materiallar har bir o'quvchi uchun tushunarli shaklda.",
-  },
-  {
-    title: "Katta jamoa",
-    text: "50 000 dan ortiq o'quvchilar va mutaxassislar hamjamiyati doimiy qo'llab-quvvatlashga tayyor.",
-  },
-  {
-    title: "Amaliy yondashuv",
-    text: "Nazariy bilimlar va amaliy topshiriqlar uyg'unligi olingan ko'nikmalarni amalda qo'llash imkonini beradi.",
-  },
-];
-
-const timeline = [
-  {
-    date: "2021-yil, iyul",
-    title: "Start",
-    text: "Texnopark o'z faoliyatini boshladi va ilk talabalarni qabul qildi.",
-  },
-  {
-    date: "2021-yil, sentyabr",
-    title: "O'sish",
-    text: "Birinchi amaliy kurslar ishga tushirildi va dastur kengaytirildi.",
-  },
-  {
-    date: "2022-yil, mart",
-    title: "Yangi loyihalar",
-    text: "Yosh dasturchilar uchun akselerator va mentorlik dasturlari yo'lga qo'yildi.",
-  },
-  {
-    date: "2023-yil, sentyabr",
-    title: "Yanada ko'p bilimlar",
-    text: "Yo'nalishlar soni keskin oshirildi, jamoa va hamkorlar tarmog'i kengaydi.",
-  },
-];
-
-const faq = [
-  {
-    q: "Texnoparkda o'quv dasturlari qanday tashkil etilgan?",
-    a: "Guliston Yoshlar Texnoparkida dasturlar odatda bir necha oydan boshlab uzunroq muddatgacha davom etadi va amaliy topshiriqlar, loyihalar hamda mentorlik bilan boyitilgan o'quv rejasiga asoslanadi.",
-  },
-  {
-    q: "Darslar qanday shaklda o'tkaziladi?",
-    a: "Auditoriyada va onlayn formatda mashg'ulotlar, video materiallar, testlar hamda mentor bilan muntazam muloqot tashkil etiladi — tanlangan yo'nalishga qarab.",
-  },
-  {
-    q: "O'qitishdan keyin ishga chiqishga yordam berasizmi?",
-    a: "Amaliy bilim va kasbiy ko'nikmalar beriladi; ishga joylashish esa sizning faolligingiz, portfoliongiz va bozor talablariga ham bog'liq.",
-  },
-  {
-    q: "To'lovni bo'lib-bo'lib to'lash mumkinmi?",
-    a: "Ha, ayrim dasturlar bo'yicha to'lovni bo'lib to'lash imkoniyati mavjud — batafsil ma'lumotni markazda aniqlashingiz mumkin.",
-  },
-];
 
 const scrollImages = [scroll1, scroll2, scroll3, scroll4, scroll5, scroll6];
 /** 3 ta bir xil ketma-ketlik — scroll transform bitta tsikl = scrollWidth / 3 */
@@ -132,29 +98,62 @@ const mosaicRowClass =
   "relative shrink-0 h-[min(64vh,720px)] overflow-hidden sm:h-[min(70vh,800px)] lg:h-[min(76vh,900px)] xl:h-[min(82vh,1020px)]";
 
 export default function About() {
-  const [cmsOverride, setCmsOverride] = useState<{
-    eyebrow: string;
-    title: string;
-    subtitle: string;
-    bodyHtml: string;
+  const { language } = useLanguage();
+  const a = aboutPageI18n[language];
+  const [djangoBundle, setDjangoBundle] = useState<{
+    aboutUs: DjangoAboutUs | null;
+    company: DjangoAboutCompany | null;
+    history: DjangoHistoryRow[];
+    faqs: DjangoFaqRow[];
+    quote: DjangoQuoteRow | null;
+    team: TeamMemberData[];
+    ready: boolean;
   } | null>(null);
 
   useEffect(() => {
-    if (!canUseFirebase()) return;
-    const unsub = watchAboutCms((d) => {
-      if (d && d.enabled && typeof d.bodyHtml === "string" && d.bodyHtml.trim().length > 0) {
-        setCmsOverride({
-          eyebrow: d.eyebrow ?? "",
-          title: d.title ?? "",
-          subtitle: d.subtitle ?? "",
-          bodyHtml: d.bodyHtml,
+    let cancelled = false;
+    void (async () => {
+      try {
+        const [aboutUs, companyList, history, faqs, quote, team] = await Promise.all([
+          djangoGetAboutUs(),
+          djangoListAboutCompany(),
+          djangoListHistory(),
+          djangoListFaqsPublic(),
+          djangoGetQuoteLatest(),
+          djangoListTeam(),
+        ]);
+        if (cancelled) return;
+        setDjangoBundle({
+          aboutUs,
+          company: companyList[0] ?? null,
+          history,
+          faqs,
+          quote,
+          team: team.map((t) => ({
+            name: t.full_name,
+            role: t.position,
+            image: t.img || director,
+            socials: [],
+          })),
+          ready: true,
         });
-        return;
+      } catch {
+        if (cancelled) return;
+        setDjangoBundle({
+          aboutUs: null,
+          company: null,
+          history: [],
+          faqs: [],
+          quote: null,
+          team: [],
+          ready: true,
+        });
       }
-      setCmsOverride(null);
-    });
-    return unsub;
-  }, []);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [language]);
 
   const marqueeRef = useRef<HTMLElement | null>(null);
   const row1TrackRef = useRef<HTMLDivElement | null>(null);
@@ -204,29 +203,25 @@ export default function About() {
     };
   }, []);
 
-  if (cmsOverride) {
-    return (
-      <div className="min-h-screen overflow-x-hidden bg-[#f7f9fd] dark:bg-[#08101B]">
-        <PageHero
-          eyebrow={cmsOverride.eyebrow}
-          title={cmsOverride.title}
-          subtitle={cmsOverride.subtitle}
-        />
-        <PageContent className="mx-auto max-w-[860px] pb-20 pt-8">
-          <div
-            className="prose max-w-none text-[#33445F] dark:prose-invert dark:text-white"
-            dangerouslySetInnerHTML={{ __html: cmsOverride.bodyHtml }}
-          />
-        </PageContent>
-      </div>
-    );
-  }
+  const django = djangoBundle?.ready ? djangoBundle : null;
+  const locTag = localeTag(language);
+  const locOpts = localeDateOptions(language);
+  const timelineToShow =
+    django && django.history.length > 0
+      ? django.history.map((h) => ({
+          date: new Date(h.created_at).toLocaleDateString(locTag, locOpts),
+          title: h.title,
+          text: stripHtml(h.body_small),
+        }))
+      : a.timeline;
+  const faqToShow =
+    django && django.faqs.length > 0 ? django.faqs.map((f) => ({ q: f.question, a: f.answer })) : a.faq;
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#f7f9fd] dark:bg-[#08101B]">
       <section className="relative left-1/2 right-1/2 -mt-[5.5rem] w-screen max-w-[100vw] -translate-x-1/2 overflow-hidden bg-[#061018] pt-[5.5rem] sm:-mt-24 sm:pt-24">
         <div className="relative mx-auto min-h-[min(78vh,760px)] w-full max-w-[1920px] overflow-hidden rounded-b-[1.35rem] shadow-[0_28px_90px_-28px_rgba(11,74,162,0.45)] sm:min-h-[min(84vh,840px)] sm:rounded-b-[clamp(1.35rem,3vw,2.5rem)]">
-          <AboutHeroMedia posterSrc={groupimage} />
+          <AboutHeroMedia posterSrc={groupimage} posterAlt={a.heroPosterAlt} videoTitle={a.videoTitle} />
           <div
             className="pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_90%_70%_at_50%_20%,transparent_20%,rgba(6,16,24,0.5)_100%)] dark:bg-[radial-gradient(ellipse_90%_70%_at_50%_18%,transparent_25%,rgba(0,0,0,0.55)_100%)]"
             aria-hidden
@@ -251,7 +246,7 @@ export default function About() {
           <div className="relative z-[3] flex min-h-[min(70vh,640px)] w-full flex-col justify-end px-4 pb-10 pt-24 sm:min-h-[min(76vh,720px)] sm:px-6 sm:pb-14 sm:pt-28 lg:px-12 xl:px-16">
             <div className="mx-auto w-full max-w-[1180px] text-center lg:text-left">
               <h1 className="text-2xl font-bold leading-tight text-white [text-shadow:0_2px_36px_rgba(0,0,0,0.55),0_1px_3px_rgba(0,0,0,0.95)] sm:text-3xl sm:leading-tight lg:max-w-3xl lg:text-[2.35rem] lg:leading-[1.1] xl:text-[2.65rem]">
-                Texnopark bilan bilim yo'lingizni boshlang
+                {a.heroH1}
               </h1>
             </div>
           </div>
@@ -259,7 +254,7 @@ export default function About() {
 
         <nav
           className="relative z-[4] -mt-6 px-4 pb-2 sm:-mt-8 sm:px-6 lg:px-10 xl:px-16"
-          aria-label="Texnopark haqida qisqa"
+          aria-label={a.navAria}
         >
           <div className="mx-auto max-w-[1160px] overflow-hidden rounded-2xl border border-[#dbe7fb]/90 bg-gradient-to-br from-white via-[#f7faff] to-[#eef4ff] shadow-[0_22px_60px_-18px_rgba(11,74,162,0.22),0_0_0_1px_rgba(255,255,255,0.8)_inset] backdrop-blur-xl dark:border-[#1e3048] dark:from-[#0d1522] dark:via-[#0a121c] dark:to-[#070f18] dark:shadow-[0_28px_70px_-24px_rgba(0,0,0,0.65),inset_0_1px_0_rgba(255,255,255,0.06)] sm:rounded-3xl">
             <div
@@ -270,13 +265,13 @@ export default function About() {
               <div className="flex min-w-0 flex-1 flex-col gap-4 lg:max-w-[54%]">
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="inline-flex items-center rounded-full bg-gradient-to-r from-[#0b4397] to-[#1d6fd4] px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white shadow-md shadow-[#0b4397]/25">
-                    Biz haqimizda
+                    {a.navEyebrow}
                   </span>
                 </div>
                 <p className="text-[15px] leading-relaxed text-[#3d4f66] dark:text-white/80">
-                  Biz o'quvchilar bilan bilim va tajribani baham ko'rishga tayyor professional hamjamiyatmiz.
-                  Innovatsion ta'lim, mentorlik va amaliy yondashuv orqali minglab yoshlarning kasbiy rivojlanishiga
-                  hissa qo'shamiz.
+                  {django?.company?.text
+                    ? stripHtml(django.company.text).slice(0, 420)
+                    : a.stubFallback}
                 </p>
               </div>
 
@@ -286,22 +281,30 @@ export default function About() {
                     <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#0b4397]/15 to-[#2563eb]/10 text-[#0b4aa2] dark:from-[#3b82f6]/20 dark:to-[#1d4ed8]/15 dark:text-[#93c5fd]">
                       <FaUsers className="h-4 w-4" aria-hidden />
                     </span>
-                    <span className="text-lg font-extrabold tabular-nums text-[#0b4aa2] dark:text-[#8ab8ff] sm:text-xl">+50,000</span>
-                    <span className="mt-0.5 text-[11px] font-medium text-[#5f708b] dark:text-white/65">o'quvchilar</span>
+                    <span className="text-lg font-extrabold tabular-nums text-[#0b4aa2] dark:text-[#8ab8ff] sm:text-xl">
+                      {django?.aboutUs != null
+                        ? django.aboutUs.students.toLocaleString(locTag)
+                        : "+50,000"}
+                    </span>
+                    <span className="mt-0.5 text-[11px] font-medium text-[#5f708b] dark:text-white/65">{a.statsStudents}</span>
                   </div>
                   <div className="group flex flex-col items-center rounded-2xl border border-[#dbe7fb] bg-white/90 px-2 py-3 text-center shadow-sm transition hover:border-[#0b4397]/35 hover:shadow-md dark:border-[#243a55] dark:bg-[#0f1a2c]/90 dark:hover:border-[#3d5a80] sm:px-4 sm:py-4">
                     <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#0b4397]/15 to-[#2563eb]/10 text-[#0b4aa2] dark:from-[#3b82f6]/20 dark:to-[#1d4ed8]/15 dark:text-[#93c5fd]">
                       <FaLayerGroup className="h-4 w-4" aria-hidden />
                     </span>
-                    <span className="text-lg font-extrabold tabular-nums text-[#0b4aa2] dark:text-[#8ab8ff] sm:text-xl">20+</span>
-                    <span className="mt-0.5 text-[11px] font-medium text-[#5f708b] dark:text-white/65">yo'nalish</span>
+                    <span className="text-lg font-extrabold tabular-nums text-[#0b4aa2] dark:text-[#8ab8ff] sm:text-xl">
+                      {django?.aboutUs != null ? django.aboutUs.direction : "20+"}
+                    </span>
+                    <span className="mt-0.5 text-[11px] font-medium text-[#5f708b] dark:text-white/65">{a.statsDirection}</span>
                   </div>
                   <div className="group flex flex-col items-center rounded-2xl border border-[#dbe7fb] bg-white/90 px-2 py-3 text-center shadow-sm transition hover:border-[#0b4397]/35 hover:shadow-md dark:border-[#243a55] dark:bg-[#0f1a2c]/90 dark:hover:border-[#3d5a80] sm:px-4 sm:py-4">
                     <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#0b4397]/15 to-[#2563eb]/10 text-[#0b4aa2] dark:from-[#3b82f6]/20 dark:to-[#1d4ed8]/15 dark:text-[#93c5fd]">
                       <FaChalkboardTeacher className="h-4 w-4" aria-hidden />
                     </span>
-                    <span className="text-lg font-extrabold tabular-nums text-[#0b4aa2] dark:text-[#8ab8ff] sm:text-xl">50+</span>
-                    <span className="mt-0.5 text-[11px] font-medium text-[#5f708b] dark:text-white/65">mutaxassis</span>
+                    <span className="text-lg font-extrabold tabular-nums text-[#0b4aa2] dark:text-[#8ab8ff] sm:text-xl">
+                      {django?.aboutUs != null ? django.aboutUs.specialist : "50+"}
+                    </span>
+                    <span className="mt-0.5 text-[11px] font-medium text-[#5f708b] dark:text-white/65">{a.statsSpecialist}</span>
                   </div>
                 </div>
 
@@ -318,27 +321,30 @@ export default function About() {
         <section className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           <div className="rounded-[2rem] border border-[#E7ECF5] bg-white p-8 shadow-sm dark:border-[#1f2f44] dark:bg-[#0d1829]">
             <h2 className="text-2xl font-bold text-[#2a3d5f] dark:text-white lg:text-3xl">
-              Guliston Yoshlar Texnoparki bugun
+              {django?.company?.title ?? a.sectionTitleDefault}
             </h2>
-            <p className="mt-4 leading-relaxed text-[#60708b] dark:text-white/70">
-              Innovatsion rivojlanish tizimida yoshlar uchun texnologiya, ta'lim va tadbirkorlikni bir
-              joyda jamlagan hududiy markazmiz. Amaliy o'quv dasturlari, laboratoriyalar va tadbirlar
-              orqali Guliston va atrof-mintaqadagi yoshlar zamonaviy kasb va g'oyalarni rivojlantiradi.
-            </p>
+            {django?.company?.text ? (
+              <div
+                className="prose prose-sm mt-4 max-w-none text-[#60708b] dark:prose-invert dark:text-white/70"
+                dangerouslySetInnerHTML={{ __html: django.company.text }}
+              />
+            ) : (
+              <p className="mt-4 leading-relaxed text-[#60708b] dark:text-white/70">{a.fallbackBody}</p>
+            )}
             <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-[#4e6382] dark:text-white/70">
               <span className="inline-flex items-center gap-2">
-                <FaUsers /> Yoshlar va hamjamiyat
+                <FaUsers /> {a.tagYouth}
               </span>
               <span className="inline-flex items-center gap-2">
-                <FaChalkboardTeacher /> Mentorlar va mutaxassislar
+                <FaChalkboardTeacher /> {a.tagMentors}
               </span>
             </div>
           </div>
 
           <div className="rounded-[2rem] border border-[#E7ECF5] bg-white p-8 shadow-sm dark:border-[#1f2f44] dark:bg-[#0d1829]">
-            <h3 className="text-xl font-bold text-[#2a3d5f] dark:text-white lg:text-3xl">Afzalliklarimiz</h3>
+            <h3 className="text-xl font-bold text-[#2a3d5f] dark:text-white lg:text-3xl">{a.benefitsTitle}</h3>
             <div className="mt-6 space-y-4">
-              {benefits.map((item) => (
+              {a.benefits.map((item) => (
                 <div
                   key={item.title}
                   className="rounded-2xl border border-[#edf2fb] bg-[#f9fbff] p-4 transition hover:-translate-y-0.5 hover:shadow-md dark:border-[#253a57] dark:bg-[#0f1d31]"
@@ -352,7 +358,7 @@ export default function About() {
         </section>
 
         <div className="mt-10">
-          <Team />
+          <Team members={django && django.team.length > 0 ? django.team : undefined} />
         </div>
 
         <section
@@ -383,7 +389,7 @@ export default function About() {
                   >
                     <img
                       src={image}
-                      alt="Texnopark"
+                      alt={a.mosaicAlt}
                       className="block h-full w-full object-cover object-center"
                     />
                   </div>
@@ -409,7 +415,7 @@ export default function About() {
                   >
                     <img
                       src={image}
-                      alt="Texnopark"
+                      alt={a.mosaicAlt}
                       className="block h-full w-full object-cover object-center"
                     />
                   </div>
@@ -431,25 +437,27 @@ export default function About() {
                       alt=""
                       className="mb-2 h-5 w-5 opacity-80 sm:mb-2.5 sm:h-6 sm:w-6"
                     />
-                    <p className="text-balance text-sm font-medium leading-snug text-white sm:text-base md:text-lg md:leading-snug lg:text-xl lg:leading-snug">
-                      “Texnopark bu shunchaki ta'lim markazi emas, bu yangilik yaratuvchi yoshlar uchun
-                      imkoniyatlar maydoni. Har bir g'oya qo'llab-quvvatlanadigan va amaliy natijaga
-                      aylanadigan kelajakni birgalikda bunyod etamiz.”
-                    </p>
+                    <p
+                      className="text-balance text-sm font-medium leading-snug text-white sm:text-base md:text-lg md:leading-snug lg:text-xl lg:leading-snug"
+                      dangerouslySetInnerHTML={{
+                        __html:
+                          django?.quote?.body?.trim() || a.quoteFallbackHtml,
+                      }}
+                    />
                   </div>
                   <div className="mt-3 flex shrink-0 items-end justify-between gap-2.5 sm:mt-3.5">
                     <div className="flex min-w-0 items-center gap-2.5 text-left">
                       <img
-                        src={director}
-                        alt="Direktor"
+                        src={django?.quote?.img || director}
+                        alt={a.directorAlt}
                         className="h-10 w-10 shrink-0 rounded-full border-2 border-white/20 object-cover sm:h-12 sm:w-12"
                       />
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-white sm:text-sm">
-                          Mamatov Avaz Muxiddinovich
+                          {django?.quote?.full_name ?? a.quoteNameDefault}
                         </p>
                         <p className="mt-0.5 text-[10px] text-white/70 sm:text-xs">
-                          Guliston Yoshlar Texnoparki direktori
+                          {django?.quote?.position ?? a.quoteRoleDefault}
                         </p>
                       </div>
                     </div>
@@ -467,12 +475,12 @@ export default function About() {
 
         <section className="mt-12 rounded-[2rem] border border-[#E7ECF5] bg-white p-8 shadow-sm dark:border-[#1f2f44] dark:bg-[#0d1829]">
           <h3 className="text-2xl font-bold text-[#2a3d5f] dark:text-white lg:text-3xl">
-            Guliston Yoshlar Texnoparki tarixi
+            {a.historyTitle}
           </h3>
           <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
-            {timeline.map((item) => (
+            {timelineToShow.map((item) => (
               <article
-                key={item.date}
+                key={`${item.date}-${item.title}`}
                 className="relative rounded-2xl border border-[#e9effb] bg-[#f8fbff] p-5 pl-12 dark:border-[#243954] dark:bg-[#0f1c30]"
               >
                 <span className="absolute top-6 left-5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#dce9ff] text-[#0b4aa2] dark:bg-[#1c3250] dark:text-[#8ab8ff]">
@@ -488,9 +496,9 @@ export default function About() {
 
         <section className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-2">
           <div className="rounded-[2rem] border border-[#E7ECF5] bg-white p-8 shadow-sm dark:border-[#1f2f44] dark:bg-[#0d1829]">
-            <h3 className="text-2xl font-bold text-[#2a3d5f] dark:text-white">Savollaringiz bormi?</h3>
+            <h3 className="text-2xl font-bold text-[#2a3d5f] dark:text-white">{a.faqSectionTitle}</h3>
             <div className="mt-5 space-y-3">
-              {faq.map((item) => (
+              {faqToShow.map((item) => (
                 <details
                   key={item.q}
                   className="group rounded-xl border border-[#e8eef9] bg-[#f9fbff] p-4 open:shadow-sm dark:border-[#243954] dark:bg-[#0f1d31]"
@@ -505,31 +513,29 @@ export default function About() {
           </div>
 
           <div className="rounded-[2rem] border border-[#E7ECF5] bg-white p-8 shadow-sm dark:border-[#1f2f44] dark:bg-[#0d1829]">
-            <h3 className="text-2xl font-bold text-[#2a3d5f] dark:text-white">So'rov qoldiring</h3>
-            <p className="mt-2 text-sm text-[#637590] dark:text-white/70">
-              Ma'lumotlarni yuboring va biz siz bilan yaqin vaqtda bog'lanamiz.
-            </p>
+            <h3 className="text-2xl font-bold text-[#2a3d5f] dark:text-white">{a.requestTitle}</h3>
+            <p className="mt-2 text-sm text-[#637590] dark:text-white/70">{a.requestSubtitle}</p>
             <form className="mt-6 space-y-3">
               <input
                 className="w-full rounded-xl border border-[#dbe5f6] bg-[#f9fbff] px-4 py-3 text-sm text-[#2f4363] outline-none transition focus:border-[#0b4aa2] dark:border-[#2a3f5b] dark:bg-[#0f1d31] dark:text-white"
-                placeholder="Ismingiz"
+                placeholder={a.formPlaceholderName}
               />
               <input
                 className="w-full rounded-xl border border-[#dbe5f6] bg-[#f9fbff] px-4 py-3 text-sm text-[#2f4363] outline-none transition focus:border-[#0b4aa2] dark:border-[#2a3f5b] dark:bg-[#0f1d31] dark:text-white"
-                placeholder="Telefon raqami"
+                placeholder={a.formPlaceholderPhone}
               />
               <select className="w-full rounded-xl border border-[#dbe5f6] bg-[#f9fbff] px-4 py-3 text-sm text-[#2f4363] outline-none transition focus:border-[#0b4aa2] dark:border-[#2a3f5b] dark:bg-[#0f1d31] dark:text-white">
-                <option>Qulay vaqtni tanlang</option>
+                <option>{a.formTimePrompt}</option>
                 <option>8:00 - 10:00</option>
                 <option>10:00 - 12:00</option>
                 <option>14:00 - 16:00</option>
               </select>
               <label className="flex items-center gap-2 text-sm text-[#5f708b] dark:text-white/70">
                 <input type="checkbox" />
-                Ma'lumotlarim qayta ishlanishiga roziman
+                {a.formAgree}
               </label>
-              <button className="w-full rounded-xl bg-[#0b4aa2] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0a3f8b]">
-                Ma'lumotlarni yuborish
+              <button type="button" className="w-full rounded-xl bg-[#0b4aa2] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0a3f8b]">
+                {a.formSubmit}
               </button>
             </form>
           </div>
